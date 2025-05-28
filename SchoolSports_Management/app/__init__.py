@@ -2,7 +2,7 @@
 
 from flask import Flask
 
-from SchoolSports_Management.instance import config
+
 
 
 #工厂函数
@@ -11,3 +11,7 @@ def create_app():
     app = Flask(__name__, instance_relative_config=True)
     #从config文件中加载配置
     app.config.from_pyfile('config.py')
+    from . import db
+    #将db对象与FLASK应用实例关联起来
+    db.init_app(app)
+    return app
