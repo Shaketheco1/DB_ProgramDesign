@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}裁判面板 - 校运会管理系统{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>裁判工作台</h2>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">今日比赛</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>比赛ID</th>
+                                    <th>项目名称</th>
+                                    <th>分组</th>
+                                    <th>场地</th>
+                                    <th>开始时间</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for competition in today_competitions %}
+                                <tr>
+                                    <td>{{ competition.CompetitionID }}</td>
+                                    <td>{{ competition.EventName }}</td>
+                                    <td>{{ competition.GroupName }}</td>
+                                    <td>{{ competition.VenueName }}</td>
+                                    <td>{{ competition.ScheduledStartTime.strftime('%H:%M') }}</td>
+                                    <td>
+                                        <span class="badge {% if competition.Status == '进行中' %}bg-success{% elif competition.Status == '未开始' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ competition.Status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('main.record_result', competition_id=competition.CompetitionID) }}" 
+                                           class="btn btn-sm btn-primary {% if competition.Status != '进行中' %}disabled{% endif %}">
+                                            录入成绩
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">已录入成绩</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>比赛ID</th>
+                                    <th>项目名称</th>
+                                    <th>学生姓名</th>
+                                    <th>成绩</th>
+                                    <th>名次</th>
+                                    <th>录入时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in recorded_results %}
+                                <tr>
+                                    <td>{{ result.CompetitionID }}</td>
+                                    <td>{{ result.EventName }}</td>
+                                    <td>{{ result.StudentName }}</td>
+                                    <td>{{ result.Value }}</td>
+                                    <td>{{ result.Ranking }}</td>
+                                    <td>{{ result.RecordTime.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('main.edit_result', result_id=result.ResultID) }}" 
+                                           class="btn btn-sm btn-warning">
+                                            修改
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>我的比赛成绩</h2>
+    
+    {% if results %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>比赛项目</th>
+                    <th>分组</th>
+                    <th>比赛场地</th>
+                    <th>比赛时间</th>
+                    <th>成绩</th>
+                    <th>名次</th>
+                    <th>积分</th>
+                    <th>是否破纪录</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in results %}
+                <tr>
+                    <td>{{ result.EventName }}</td>
+                    <td>{{ result.GroupName }}</td>
+                    <td>{{ result.VenueName }}</td>
+                    <td>{{ result.ScheduledStartTime.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ result.Value }}</td>
+                    <td>{{ result.Ranking }}</td>
+                    <td>{{ result.Score }}</td>
+                    <td>
+                        {% if result.IsRecordBreaking %}
+                        <span class="badge bg-danger">是</span>
+                        {% else %}
+                        <span class="badge bg-secondary">否</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        您还没有任何比赛成绩记录。
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

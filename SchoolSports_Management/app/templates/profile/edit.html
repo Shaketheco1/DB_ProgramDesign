@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>编辑个人信息</h2>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <form method="POST" action="{{ url_for('main.edit_profile') }}">
+                <div class="mb-3">
+                    <label class="form-label">用户ID</label>
+                    <input type="text" class="form-control" value="{{ user_info.StudentID if current_user.role == 'student' else user_info.RefereeID if current_user.role == 'Referee' else user_info.AdminID }}" readonly>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">姓名</label>
+                    <input type="text" class="form-control" value="{{ user_info.Name }}" readonly>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">联系电话</label>
+                    <input type="tel" class="form-control" name="phone" value="{{ user_info.Phone }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">电子邮箱</label>
+                    <input type="email" class="form-control" name="email" value="{{ user_info.Email }}">
+                </div>
+                
+                <div class="mb-3">
+                    <a href="{{ url_for('main.change_password') }}" class="btn btn-warning">修改密码</a>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">保存修改</button>
+                <a href="{{ url_for('main.profile') }}" class="btn btn-secondary">返回</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

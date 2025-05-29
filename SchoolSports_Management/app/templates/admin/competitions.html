@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>赛程安排</h2>
+        <a href="{{ url_for('main.add_competition') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> 添加新赛程
+        </a>
+    </div>
+
+    <!-- 赛程列表 -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>比赛ID</th>
+                            <th>项目名称</th>
+                            <th>分组</th>
+                            <th>场地</th>
+                            <th>开始时间</th>
+                            <th>结束时间</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for competition in competitions %}
+                        <tr>
+                            <td>{{ competition.CompetitionID }}</td>
+                            <td>{{ competition.EventName }}</td>
+                            <td>{{ competition.GroupName }}</td>
+                            <td>{{ competition.VenueName }}</td>
+                            <td>{{ competition.ScheduledStartTime.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ competition.ScheduledEndTime.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                {% if competition.Status == '未开始' %}
+                                <span class="badge bg-secondary">未开始</span>
+                                {% elif competition.Status == '进行中' %}
+                                <span class="badge bg-success">进行中</span>
+                                {% elif competition.Status == '已结束' %}
+                                <span class="badge bg-info">已结束</span>
+                                {% else %}
+                                <span class="badge bg-danger">取消</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-info" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#viewModal{{ competition.CompetitionID }}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <a href="{{ url_for('main.edit_competition', competition_id=competition.CompetitionID) }}" 
+                                       class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#deleteModal{{ competition.CompetitionID }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+
+                                <!-- 查看详情模态框 -->
+                                <div class="modal fade" id="viewModal{{ competition.CompetitionID }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">赛程详情</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <dl class="row">
+                                                    <dt class="col-sm-4">比赛ID</dt>
+                                                    <dd class="col-sm-8">{{ competition.CompetitionID }}</dd>
+                                                    
+                                                    <dt class="col-sm-4">项目名称</dt>
+                                                    <dd class="col-sm-8">{{ competition.EventName }}</dd>
+                                                    
+                                                    <dt class="col-sm-4">分组</dt>
+                                                    <dd class="col-sm-8">{{ competition.GroupName }}</dd>
+                                                    
+                                                    <dt class="col-sm-4">场地</dt>
+                                                    <dd class="col-sm-8">{{ competition.VenueName }}</dd>
+                                                    
+                                                    <dt class="col-sm-4">计划开始时间</dt>
+                                                    <dd class="col-sm-8">{{ competition.ScheduledStartTime.strftime('%Y-%m-%d %H:%M') }}</dd>
+                                                    
+                                                    <dt class="col-sm-4">计划结束时间</dt>
+                                                    <dd class="col-sm-8">{{ competition.ScheduledEndTime.strftime('%Y-%m-%d %H:%M') }}</dd>
+                                                    
+                                                    <dt class="col-sm-4">实际开始时间</dt>
+                                                    <dd class="col-sm-8">
+                                                        {% if competition.ActualStartTime %}
+                                                        {{ competition.ActualStartTime.strftime('%Y-%m-%d %H:%M') }}
+                                                        {% else %}
+                                                        未开始
+                                                        {% endif %}
+                                                    </dd>
+                                                    
+                                                    <dt class="col-sm-4">实际结束时间</dt>
+                                                    <dd class="col-sm-8">
+                                                        {% if competition.ActualEndTime %}
+                                                        {{ competition.ActualEndTime.strftime('%Y-%m-%d %H:%M') }}
+                                                        {% else %}
+                                                        未结束
+                                                        {% endif %}
+                                                    </dd>
+                                                    
+                                                    <dt class="col-sm-4">状态</dt>
+                                                    <dd class="col-sm-8">{{ competition.Status }}</dd>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 删除确认模态框 -->
+                                <div class="modal fade" id="deleteModal{{ competition.CompetitionID }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">确认删除</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>确定要删除赛程 "{{ competition.EventName }} - {{ competition.GroupName }}" 吗？此操作不可恢复。</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                                <form action="{{ url_for('main.delete_competition', competition_id=competition.CompetitionID) }}" method="POST" class="d-inline">
+                                                    <button type="submit" class="btn btn-danger">确认删除</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">添加新比赛项目</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('main.add_event') }}">
+                        <div class="mb-3">
+                            <label for="event_id" class="form-label">项目ID</label>
+                            <input type="text" class="form-control" id="event_id" name="event_id" required
+                                   pattern="[A-Za-z0-9]+" title="请输入字母和数字组合的ID">
+                            <div class="form-text">请输入唯一的项目标识符（字母和数字组合）</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="event_name" class="form-label">项目名称</label>
+                            <input type="text" class="form-control" id="event_name" name="event_name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="event_type" class="form-label">项目类型</label>
+                            <select class="form-select" id="event_type" name="event_type" required>
+                                <option value="">请选择项目类型</option>
+                                <option value="田赛">田赛</option>
+                                <option value="径赛">径赛</option>
+                                <option value="团体">团体</option>
+                                <option value="趣味">趣味</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="gender_restriction" class="form-label">性别限制</label>
+                            <select class="form-select" id="gender_restriction" name="gender_restriction" required>
+                                <option value="不限">不限</option>
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="max_participants" class="form-label">最大参赛人数</label>
+                            <input type="number" class="form-control" id="max_participants" name="max_participants"
+                                   required min="1" max="100">
+                            <div class="form-text">每班最大参赛人数</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="rules" class="form-label">项目规则</label>
+                            <textarea class="form-control" id="rules" name="rules" rows="4" required></textarea>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="is_final" name="is_final" value="true">
+                            <label class="form-check-label" for="is_final">是否为决赛项目</label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">添加项目</button>
+                            <a href="{{ url_for('main.manage_events') }}" class="btn btn-secondary">返回列表</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

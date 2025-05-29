@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">添加新学生</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('main.add_student') }}">
+                        <div class="mb-3">
+                            <label for="student_id" class="form-label">学号</label>
+                            <input type="text" class="form-control" id="student_id" name="student_id" 
+                                   required pattern="[A-Za-z0-9]+" title="学号只能包含字母和数字">
+                            <div class="form-text">请输入学生的学号（只能包含字母和数字）</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">姓名</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="gender" class="form-label">性别</label>
+                            <select class="form-select" id="gender" name="gender" required>
+                                <option value="">请选择性别</option>
+                                <option value="M">男</option>
+                                <option value="F">女</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="class_name" class="form-label">班级</label>
+                            <input type="text" class="form-control" id="class_name" name="class_name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">联系电话</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   pattern="[0-9]{11}" title="请输入11位手机号码">
+                            <div class="form-text">请输入11位手机号码</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">电子邮箱</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">初始密码</label>
+                            <input type="password" class="form-control" id="password" name="password" 
+                                   required minlength="6">
+                            <div class="form-text">请输入至少6位的初始密码</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">添加学生</button>
+                            <a href="{{ url_for('main.students') }}" class="btn btn-secondary">返回学生列表</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

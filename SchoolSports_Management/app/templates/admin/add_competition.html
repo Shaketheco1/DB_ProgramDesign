@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">添加新赛程</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('main.add_competition') }}">
+                        <div class="mb-3">
+                            <label for="competition_id" class="form-label">比赛ID</label>
+                            <input type="text" class="form-control" id="competition_id" name="competition_id" required
+                                   pattern="[A-Za-z0-9]+" title="请输入字母和数字组合的ID">
+                            <div class="form-text">请输入唯一的比赛标识符（字母和数字组合）</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="event_id" class="form-label">比赛项目</label>
+                            <select class="form-select" id="event_id" name="event_id" required>
+                                <option value="">请选择比赛项目</option>
+                                {% for event in events %}
+                                <option value="{{ event.EventID }}">{{ event.EventName }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="group_name" class="form-label">分组名称</label>
+                            <input type="text" class="form-control" id="group_name" name="group_name" required>
+                            <div class="form-text">请输入分组名称（如：预赛A组、决赛等）</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="venue_id" class="form-label">比赛场地</label>
+                            <select class="form-select" id="venue_id" name="venue_id" required>
+                                <option value="">请选择比赛场地</option>
+                                {% for venue in venues %}
+                                <option value="{{ venue.VenueID }}">{{ venue.VenueName }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="scheduled_start_time" class="form-label">计划开始时间</label>
+                            <input type="datetime-local" class="form-control" id="scheduled_start_time" 
+                                   name="scheduled_start_time" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="scheduled_end_time" class="form-label">计划结束时间</label>
+                            <input type="datetime-local" class="form-control" id="scheduled_end_time" 
+                                   name="scheduled_end_time" required>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">添加赛程</button>
+                            <a href="{{ url_for('main.manage_competitions') }}" class="btn btn-secondary">返回列表</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 设置时间输入框的最小值为当前时间
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+    
+    document.getElementById('scheduled_start_time').min = minDateTime;
+    document.getElementById('scheduled_end_time').min = minDateTime;
+    
+    // 确保结束时间不早于开始时间
+    document.getElementById('scheduled_start_time').addEventListener('change', function() {
+        document.getElementById('scheduled_end_time').min = this.value;
+    });
+});
+</script>
+{% endblock %}
+{% endblock %} 

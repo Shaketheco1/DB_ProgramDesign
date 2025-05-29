@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>录入比赛成绩</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">比赛信息</h5>
+            <table class="table">
+                <tr>
+                    <th>项目名称</th>
+                    <td>{{ competition.EventName }}</td>
+                    <th>分组</th>
+                    <td>{{ competition.GroupName }}</td>
+                </tr>
+                <tr>
+                    <th>场地</th>
+                    <td>{{ competition.VenueName }}</td>
+                    <th>开始时间</th>
+                    <td>{{ competition.ScheduledStartTime.strftime('%Y-%m-%d %H:%M') }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">成绩录入</h5>
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="student_id" class="form-label">选择学生</label>
+                    <select class="form-select" id="student_id" name="student_id" required>
+                        <option value="">请选择学生</option>
+                        {% for student in participants %}
+                        <option value="{{ student.StudentID }}">{{ student.Name }} ({{ student.StudentID }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="value" class="form-label">成绩</label>
+                    <input type="text" class="form-control" id="value" name="value" required>
+                    <div class="form-text">请输入具体成绩，如：11.23秒、2.5米等</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="ranking" class="form-label">名次</label>
+                    <input type="number" class="form-control" id="ranking" name="ranking" min="1" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="score" class="form-label">积分</label>
+                    <input type="number" class="form-control" id="score" name="score" min="0" required>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="is_record_breaking" name="is_record_breaking" value="true">
+                        <label class="form-check-label" for="is_record_breaking">
+                            是否打破记录
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mb-3" id="record_type_div" style="display: none;">
+                    <label for="record_type" class="form-label">记录类型</label>
+                    <select class="form-select" id="record_type" name="record_type">
+                        <option value="校记录">校记录</option>
+                        <option value="院记录">院记录</option>
+                    </select>
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">提交成绩</button>
+                    <a href="{{ url_for('main.referee_dashboard') }}" class="btn btn-secondary">返回</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+document.getElementById('is_record_breaking').addEventListener('change', function() {
+    document.getElementById('record_type_div').style.display = this.checked ? 'block' : 'none';
+});
+</script>
+{% endblock %}
+{% endblock %} 

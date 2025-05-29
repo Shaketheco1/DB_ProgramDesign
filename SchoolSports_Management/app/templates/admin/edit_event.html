@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">编辑比赛项目</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('main.edit_event', event_id=event.EventID) }}">
+                        <div class="mb-3">
+                            <label for="event_id" class="form-label">项目ID</label>
+                            <input type="text" class="form-control" id="event_id" value="{{ event.EventID }}" disabled>
+                            <div class="form-text">项目ID不可修改</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="event_name" class="form-label">项目名称</label>
+                            <input type="text" class="form-control" id="event_name" name="event_name" 
+                                   value="{{ event.EventName }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="event_type" class="form-label">项目类型</label>
+                            <select class="form-select" id="event_type" name="event_type" required>
+                                <option value="">请选择项目类型</option>
+                                <option value="田赛" {% if event.EventType == '田赛' %}selected{% endif %}>田赛</option>
+                                <option value="径赛" {% if event.EventType == '径赛' %}selected{% endif %}>径赛</option>
+                                <option value="团体" {% if event.EventType == '团体' %}selected{% endif %}>团体</option>
+                                <option value="趣味" {% if event.EventType == '趣味' %}selected{% endif %}>趣味</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="gender_restriction" class="form-label">性别限制</label>
+                            <select class="form-select" id="gender_restriction" name="gender_restriction" required>
+                                <option value="不限" {% if event.GenderRestriction == '不限' %}selected{% endif %}>不限</option>
+                                <option value="男" {% if event.GenderRestriction == '男' %}selected{% endif %}>男</option>
+                                <option value="女" {% if event.GenderRestriction == '女' %}selected{% endif %}>女</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="max_participants" class="form-label">最大参赛人数</label>
+                            <input type="number" class="form-control" id="max_participants" name="max_participants"
+                                   value="{{ event.MaxParticipants }}" required min="1" max="100">
+                            <div class="form-text">每班最大参赛人数</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="rules" class="form-label">项目规则</label>
+                            <textarea class="form-control" id="rules" name="rules" rows="4" required>{{ event.Rules }}</textarea>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="is_final" name="is_final" value="true"
+                                   {% if event.IsFinal %}checked{% endif %}>
+                            <label class="form-check-label" for="is_final">是否为决赛项目</label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">保存修改</button>
+                            <a href="{{ url_for('main.manage_events') }}" class="btn btn-secondary">返回列表</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

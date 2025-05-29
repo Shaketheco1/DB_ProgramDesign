@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>报名审核</h2>
+    
+    {% if registrations %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>报名ID</th>
+                    <th>学生姓名</th>
+                    <th>比赛项目</th>
+                    <th>报名时间</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reg in registrations %}
+                <tr>
+                    <td>{{ reg.RegistrationID }}</td>
+                    <td>{{ reg.StudentName }}</td>
+                    <td>{{ reg.EventName }}</td>
+                    <td>{{ reg.RegistrationTime.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>
+                        <span class="badge bg-warning">待审核</span>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-success" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#approveModal{{ reg.RegistrationID }}">
+                            审核
+                        </button>
+                    </td>
+                </tr>
+                
+                <!-- 审核模态框 -->
+                <div class="modal fade" id="approveModal{{ reg.RegistrationID }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">审核报名</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <form method="POST" action="{{ url_for('main.approve_registrations') }}">
+                                <div class="modal-body">
+                                    <input type="hidden" name="registration_id" value="{{ reg.RegistrationID }}">
+                                    <div class="mb-3">
+                                        <label class="form-label">审核意见</label>
+                                        <textarea class="form-control" name="note" rows="3"></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="submit" name="action" value="reject" class="btn btn-danger">拒绝</button>
+                                    <button type="submit" name="action" value="approve" class="btn btn-success">通过</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        目前没有待审核的报名记录。
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 

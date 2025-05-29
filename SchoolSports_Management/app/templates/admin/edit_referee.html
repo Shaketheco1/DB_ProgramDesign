@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">编辑裁判信息</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('main.edit_referee', referee_id=referee.RefereeID) }}">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="referee_id" class="form-label">裁判ID</label>
+                                <input type="text" class="form-control" id="referee_id" 
+                                       value="{{ referee.RefereeID }}" disabled>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">姓名</label>
+                                <input type="text" class="form-control" id="name" name="name" 
+                                       value="{{ referee.Name }}" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="gender" class="form-label">性别</label>
+                                <select class="form-select" id="gender" name="gender" required>
+                                    <option value="">请选择</option>
+                                    <option value="M" {% if referee.Gender == 'M' %}selected{% endif %}>男</option>
+                                    <option value="F" {% if referee.Gender == 'F' %}selected{% endif %}>女</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="affiliation" class="form-label">所属单位</label>
+                                <input type="text" class="form-control" id="affiliation" name="affiliation" 
+                                       value="{{ referee.Affiliation }}" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="title" class="form-label">职称</label>
+                                <input type="text" class="form-control" id="title" name="title" 
+                                       value="{{ referee.Title }}">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">联系电话</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" 
+                                       value="{{ referee.Phone }}"
+                                       pattern="\d{11}" required
+                                       title="请输入11位手机号码">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">电子邮箱</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ referee.Email }}">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="username" class="form-label">用户名</label>
+                                <input type="text" class="form-control" id="username" name="username" 
+                                       value="{{ referee.Username }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">新密码</label>
+                            <input type="password" class="form-control" id="password" name="password" 
+                                   minlength="6">
+                            <div class="form-text">如不修改密码请留空</div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('main.manage_referees') }}" class="btn btn-secondary">返回列表</a>
+                            <button type="submit" class="btn btn-primary">保存修改</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

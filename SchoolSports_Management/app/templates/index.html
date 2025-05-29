@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 校运会管理系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <h1 class="display-4 mb-4">欢迎使用校运会管理系统</h1>
+        <p class="lead">本系统提供体育赛事管理、成绩记录、裁判管理等功能</p>
+        
+        {% if not current_user.is_authenticated %}
+            <div class="mt-4">
+                <a href="{{ url_for('main.user_login') }}" class="btn btn-primary btn-lg">立即登录</a>
+            </div>
+        {% else %}
+            <div class="mt-4">
+                {% if current_user.role == 'admin' %}
+                    <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-primary btn-lg">进入管理面板</a>
+                {% elif current_user.role == 'student' %}
+                    <a href="{{ url_for('main.student_dashboard') }}" class="btn btn-primary btn-lg">进入学生面板</a>
+                {% elif current_user.role == 'Referee' %}
+                    <a href="{{ url_for('main.referee_dashboard') }}" class="btn btn-primary btn-lg">进入裁判面板</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

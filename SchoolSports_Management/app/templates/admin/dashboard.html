@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}管理员面板 - 校运会管理系统{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>管理员仪表板</h2>
+    
+    <!-- 统计卡片 -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">总用户数</h5>
+                    <p class="card-text display-4">{{ stats.total_users }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">进行中比赛</h5>
+                    <p class="card-text display-4">{{ stats.active_events }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">今日报名</h5>
+                    <p class="card-text display-4">{{ stats.today_registrations }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">待审核报名</h5>
+                    <p class="card-text display-4">{{ stats.pending_approvals }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能导航 -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">赛事管理</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('main.manage_events') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-running"></i> 比赛项目管理
+                    </a>
+                    <a href="{{ url_for('main.manage_venues') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-map-marker-alt"></i> 场地管理
+                    </a>
+                    <a href="{{ url_for('main.manage_competitions') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-calendar-alt"></i> 赛程安排
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">用户管理</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('main.students') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-user-graduate"></i> 学生管理
+                    </a>
+                    <a href="{{ url_for('main.manage_referees') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-user-tie"></i> 裁判管理
+                    </a>
+                    <a href="{{ url_for('main.manage_admins') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-user-shield"></i> 管理员管理
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系统管理 -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">系统管理</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('main.system_settings') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-cogs"></i> 系统设置
+                    </a>
+                    <a href="{{ url_for('main.data_analysis') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-chart-bar"></i> 数据分析
+                    </a>
+                    <a href="{{ url_for('main.backup_restore') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-database"></i> 备份与恢复
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

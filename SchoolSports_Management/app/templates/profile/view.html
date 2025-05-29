@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>个人信息</h2>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">基本信息</h5>
+                    <table class="table">
+                        <tr>
+                            <th>用户ID</th>
+                            <td>{{ user_info.StudentID if current_user.role == 'student' else user_info.RefereeID if current_user.role == 'Referee' else user_info.AdminID }}</td>
+                        </tr>
+                        <tr>
+                            <th>姓名</th>
+                            <td>{{ user_info.Name }}</td>
+                        </tr>
+                        <tr>
+                            <th>联系电话</th>
+                            <td>{{ user_info.Phone }}</td>
+                        </tr>
+                        <tr>
+                            <th>电子邮箱</th>
+                            <td>{{ user_info.Email }}</td>
+                        </tr>
+                        {% if current_user.role == 'student' %}
+                        <tr>
+                            <th>性别</th>
+                            <td>{{ '男' if user_info.Gender == 'M' else '女' }}</td>
+                        </tr>
+                        <tr>
+                            <th>班级</th>
+                            <td>{{ user_info.ClassID }}</td>
+                        </tr>
+                        {% elif current_user.role == 'Referee' %}
+                        <tr>
+                            <th>性别</th>
+                            <td>{{ '男' if user_info.Gender == 'M' else '女' }}</td>
+                        </tr>
+                        <tr>
+                            <th>所属单位</th>
+                            <td>{{ user_info.Affiliation }}</td>
+                        </tr>
+                        <tr>
+                            <th>职称/级别</th>
+                            <td>{{ user_info.Title }}</td>
+                        </tr>
+                        {% elif current_user.role == 'admin' %}
+                        <tr>
+                            <th>管理角色</th>
+                            <td>{{ user_info.Role }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                    
+                    <div class="mt-3">
+                        <a href="{{ url_for('main.edit_profile') }}" class="btn btn-primary">编辑信息</a>
+                        <a href="{{ url_for('main.change_password') }}" class="btn btn-warning">修改密码</a>
+                        <a href="{{ url_for('main.index') }}" class="btn btn-secondary">返回首页</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

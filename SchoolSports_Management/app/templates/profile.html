@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}个人信息 - 校运会管理系统{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">个人信息</h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>用户ID：</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {{ current_user.id }}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>用户名：</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {{ current_user.username }}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>角色：</strong>
+                    </div>
+                    <div class="col-md-8">
+                        {% if current_user.role == 'admin' %}
+                            管理员
+                        {% elif current_user.role == 'student' %}
+                            学生
+                        {% elif current_user.role == 'Referee' %}
+                            裁判
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('main.change_password') }}" class="btn btn-primary">修改密码</a>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-secondary">返回</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

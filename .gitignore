@@ -6,6 +6,7 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
-/SchoolSports_Management/instance/
+
 .venv/
 .idea/
+/SchoolSports_Management/instance/
