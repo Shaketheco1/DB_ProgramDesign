@@ -1,5 +1,7 @@
 #由于项目不是特别复杂，决定使用一个蓝图完成
 #该文件包含了程序需要的所有路由
+from sched import scheduler
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash
@@ -22,6 +24,7 @@ def index():
 #用户登录
 @app.route('/login',methods=['GET','POST'])
 def user_login():
+    #如果当前用户已登录
     if current_user.is_authenticated:
         return redirect(url_for('main.index'))
         
@@ -70,14 +73,18 @@ def admin_dashboard():
         
     # 获取系统统计数据
     stats = {
+        #全部用户数
         'total_users': db.session.execute(
             text('SELECT COUNT(*) as count FROM Student')).scalar() +
             db.session.execute(text('SELECT COUNT(*) as count FROM Referee')).scalar() +
             db.session.execute(text('SELECT COUNT(*) as count FROM Administrator')).scalar(),
+        #进行中的比赛
         'active_events': db.session.execute(
             text('SELECT COUNT(*) as count FROM Competition WHERE Status = "进行中"')).scalar(),
+        #今日报名
         'today_registrations': db.session.execute(
             text('SELECT COUNT(*) as count FROM Registration WHERE DATE(RegistrationTime) = CURDATE()')).scalar(),
+        #待审核项目
         'pending_approvals': db.session.execute(
             text('SELECT COUNT(*) as count FROM Registration WHERE Status = "待审核"')).scalar()
     }
@@ -217,6 +224,7 @@ def manage_competitions():
     ).fetchall()
     
     return render_template('admin/competitions.html', competitions=competitions)
+
 
 # 添加赛程
 @app.route('/admin/competitions/add', methods=['GET', 'POST'])
@@ -851,7 +859,7 @@ def edit_event(event_id):
             flash('更新失败，请重试！', 'error')
             return redirect(url_for('main.edit_event', event_id=event_id))
             
-    # 获取项目信息
+    # 获取项目信息，处理'GET'请求
     event = db.session.execute(
         text('SELECT * FROM Event WHERE EventID = :event_id'),
         {'event_id': event_id}
@@ -992,46 +1000,7 @@ def edit_competition(competition_id):
     if current_user.role != 'admin':
         flash('您没有权限访问此页面！', 'error')
         return redirect(url_for('main.index'))
-        
-    if request.method == 'POST':
-        try:
-            event_id = request.form.get('event_id')
-            group_name = request.form.get('group_name')
-            venue_id = request.form.get('venue_id')
-            scheduled_start_time = request.form.get('scheduled_start_time')
-            scheduled_end_time = request.form.get('scheduled_end_time')
-            status = request.form.get('status')
-            
-            db.session.execute(
-                text('''
-                    UPDATE Competition
-                    SET EventID = :event_id,
-                        GroupName = :group_name,
-                        VenueID = :venue_id,
-                        ScheduledStartTime = :scheduled_start_time,
-                        ScheduledEndTime = :scheduled_end_time,
-                        Status = :status
-                    WHERE CompetitionID = :competition_id
-                '''),
-                {
-                    'competition_id': competition_id,
-                    'event_id': event_id,
-                    'group_name': group_name,
-                    'venue_id': venue_id,
-                    'scheduled_start_time': scheduled_start_time,
-                    'scheduled_end_time': scheduled_end_time,
-                    'status': status
-                }
-            )
-            db.session.commit()
-            flash('赛程更新成功！', 'success')
-            return redirect(url_for('main.manage_competitions'))
-            
-        except Exception as e:
-            db.session.rollback()
-            flash('更新失败，请重试！', 'error')
-            return redirect(url_for('main.edit_competition', competition_id=competition_id))
-            
+
     # 获取赛程信息
     competition = db.session.execute(
         text('''
@@ -1043,18 +1012,71 @@ def edit_competition(competition_id):
         '''),
         {'competition_id': competition_id}
     ).first()
-    
+
     if not competition:
         flash('未找到该赛程信息！', 'error')
         return redirect(url_for('main.manage_competitions'))
-        
-    # 获取所有比赛项目和场地
-    events = db.session.execute(text('SELECT * FROM Event')).fetchall()
-    venues = db.session.execute(text('SELECT * FROM Venue')).fetchall()
-    
-    return render_template('admin/edit_competition.html', 
+
+    if request.method == 'POST':
+        try:
+            group_name = request.form.get('group_name')
+            venue_id = request.form.get('venue_id')
+            scheduled_start_time = request.form.get('scheduled_start_time')
+            scheduled_end_time = request.form.get('scheduled_end_time')
+            status = request.form.get('status')
+            
+            # 获取当前时间
+            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            
+            # 根据状态设置实际开始和结束时间
+            actual_start_time = competition.ActualStartTime
+            actual_end_time = competition.ActualEndTime
+            
+            if status == '进行中' and competition.Status != '进行中':
+                actual_start_time = current_time
+            elif status == '已结束' and competition.Status != '已结束':
+                actual_end_time = current_time
+                # 如果之前没有实际开始时间，则设置为当前时间
+                if not actual_start_time:
+                    actual_start_time = current_time
+
+            db.session.execute(
+                text('''
+                    UPDATE Competition
+                    SET GroupName = :group_name,
+                        VenueID = :venue_id,
+                        ScheduledStartTime = :scheduled_start_time,
+                        ScheduledEndTime = :scheduled_end_time,
+                        Status = :status,
+                        ActualStartTime = :actual_start_time,
+                        ActualEndTime = :actual_end_time
+                    WHERE CompetitionID = :competition_id
+                '''),
+                {
+                    'competition_id': competition_id,
+                    'group_name': group_name,
+                    'venue_id': venue_id,
+                    'scheduled_start_time': scheduled_start_time,
+                    'scheduled_end_time': scheduled_end_time,
+                    'status': status,
+                    'actual_start_time': actual_start_time,
+                    'actual_end_time': actual_end_time
+                }
+            )
+            db.session.commit()
+            flash('赛程更新成功！', 'success')
+            return redirect(url_for('main.manage_competitions'))
+
+        except Exception as e:
+            db.session.rollback()
+            flash('更新失败，请重试！', 'error')
+            return redirect(url_for('main.edit_competition', competition_id=competition_id))
+
+    # 获取可用场地
+    venues = db.session.execute(text('SELECT * FROM Venue WHERE Status = "可用"')).fetchall()
+
+    return render_template('admin/edit_competition.html',
                          competition=competition,
-                         events=events,
                          venues=venues)
 
 # 删除赛程
@@ -1372,6 +1394,7 @@ def edit_referee(referee_id):
     if not referee:
         flash('未找到该裁判！', 'error')
         return redirect(url_for('main.manage_referees'))
+    
     
     return render_template('admin/edit_referee.html', referee=referee)
 

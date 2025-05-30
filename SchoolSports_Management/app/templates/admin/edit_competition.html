@@ -1,1 +1,155 @@
- 
+{% extends "base.html" %}
+
+{% block title %}编辑赛程{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">编辑赛程信息</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        <!-- 比赛项目（只读） -->
+                        <div class="mb-3">
+                            <label for="event_name" class="form-label">比赛项目</label>
+                            <input type="text" class="form-control" id="event_name" 
+                                   value="{{ competition.EventName }}" readonly>
+                        </div>
+
+                        <!-- 组别名称 -->
+                        <div class="mb-3">
+                            <label for="group_name" class="form-label">组别名称</label>
+                            <input type="text" class="form-control" id="group_name" name="group_name" 
+                                   value="{{ competition.GroupName }}" required>
+                            <div class="invalid-feedback">请输入组别名称</div>
+                        </div>
+
+                        <!-- 比赛场地 -->
+                        <div class="mb-3">
+                            <label for="venue_id" class="form-label">比赛场地</label>
+                            <select class="form-select" id="venue_id" name="venue_id" required>
+                                {% for venue in venues %}
+                                <option value="{{ venue.VenueID }}" 
+                                        {% if venue.VenueID == competition.VenueID %}selected{% endif %}>
+                                    {{ venue.VenueName }} ({{ venue.Location }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">请选择比赛场地</div>
+                        </div>
+
+                        <!-- 计划开始时间 -->
+                        <div class="mb-3">
+                            <label for="scheduled_start_time" class="form-label">计划开始时间</label>
+                            <input type="datetime-local" class="form-control" id="scheduled_start_time" 
+                                   name="scheduled_start_time" 
+                                   value="{{ competition.ScheduledStartTime.strftime('%Y-%m-%dT%H:%M') }}" 
+                                   required>
+                            <div class="invalid-feedback">请选择计划开始时间</div>
+                        </div>
+
+                        <!-- 计划结束时间 -->
+                        <div class="mb-3">
+                            <label for="scheduled_end_time" class="form-label">计划结束时间</label>
+                            <input type="datetime-local" class="form-control" id="scheduled_end_time" 
+                                   name="scheduled_end_time" 
+                                   value="{{ competition.ScheduledEndTime.strftime('%Y-%m-%dT%H:%M') }}" 
+                                   required>
+                            <div class="invalid-feedback">请选择计划结束时间</div>
+                        </div>
+
+                        <!-- 实际开始时间（只读） -->
+                        <div class="mb-3">
+                            <label for="actual_start_time" class="form-label">实际开始时间</label>
+                            <input type="text" class="form-control" id="actual_start_time" 
+                                   value="{{ competition.ActualStartTime.strftime('%Y-%m-%d %H:%M') if competition.ActualStartTime else '未开始' }}" 
+                                   readonly>
+                        </div>
+
+                        <!-- 实际结束时间（只读） -->
+                        <div class="mb-3">
+                            <label for="actual_end_time" class="form-label">实际结束时间</label>
+                            <input type="text" class="form-control" id="actual_end_time" 
+                                   value="{{ competition.ActualEndTime.strftime('%Y-%m-%d %H:%M') if competition.ActualEndTime else '未结束' }}" 
+                                   readonly>
+                        </div>
+
+                        <!-- 比赛状态 -->
+                        <div class="mb-3">
+                            <label for="status" class="form-label">比赛状态</label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="未开始" {% if competition.Status == '未开始' %}selected{% endif %}>未开始</option>
+                                <option value="进行中" {% if competition.Status == '进行中' %}selected{% endif %}>进行中</option>
+                                <option value="已结束" {% if competition.Status == '已结束' %}selected{% endif %}>已结束</option>
+                                <option value="已取消" {% if competition.Status == '已取消' %}selected{% endif %}>已取消</option>
+                            </select>
+                            <div class="invalid-feedback">请选择比赛状态</div>
+                        </div>
+
+                        <!-- 按钮组 -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ url_for('main.manage_competitions') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> 返回列表
+                            </a>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> 保存修改
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+// 表单验证
+(function () {
+    'use strict'
+    var forms = document.querySelectorAll('.needs-validation')
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault()
+                event.stopPropagation()
+            }
+            form.classList.add('was-validated')
+        }, false)
+    })
+})()
+
+// 时间验证
+document.getElementById('scheduled_end_time').addEventListener('change', function() {
+    var startTime = new Date(document.getElementById('scheduled_start_time').value);
+    var endTime = new Date(this.value);
+    
+    if (endTime <= startTime) {
+        alert('结束时间必须晚于开始时间！');
+        this.value = '';
+    }
+});
+
+// 状态变更提示
+document.getElementById('status').addEventListener('change', function() {
+    var status = this.value;
+    var currentStatus = '{{ competition.Status }}';
+    
+    if (status === '进行中' && currentStatus !== '进行中') {
+        if (!confirm('将状态改为"进行中"将记录实际开始时间，是否继续？')) {
+            this.value = currentStatus;
+        }
+    } else if (status === '已结束' && currentStatus !== '已结束') {
+        if (!confirm('将状态改为"已结束"将记录实际结束时间，是否继续？')) {
+            this.value = currentStatus;
+        }
+    }
+});
+</script>
+{% endblock %}
+{% endblock %} 
