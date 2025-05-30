@@ -10,7 +10,7 @@ SECRET_KEY = secrets.token_hex(16)
 DB_HOST = '127.0.0.1'
 DB_PORT = 3306
 DB_USER = 'root'
-DB_PASSWORD = quote_plus('Cpy041024@')  # URL编码密码
+DB_PASSWORD = quote_plus('YOUR_PASSWORD')  # URL编码密码
 DB_NAME = 'SchoolSports_Management'
 
 # 上传文件配置
