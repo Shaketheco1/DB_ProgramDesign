@@ -1,96 +1,138 @@
 {% extends "base.html" %}
 
-{% block title %}裁判面板 - 校运会管理系统{% endblock %}
+{% block title %}裁判仪表盘{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h2>裁判工作台</h2>
+    <h2 class="mb-4">裁判仪表盘</h2>
     
-    <div class="row mb-4">
+    <!-- 搜索已录入成绩 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">搜索已录入成绩</h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md">
+                        <label for="result_search" class="visually-hidden">搜索成绩 (项目名称/学生姓名)</label>
+                        <input type="text" class="form-control" id="result_search" name="result_search" placeholder="搜索项目名称或学生姓名" value="{{ result_search or '' }}">
+                    </div>
+                     <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">搜索</button>
+                        <a href="{{ url_for('main.referee_dashboard') }}" class="btn btn-secondary">重置</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 已录入成绩 (搜索结果或最近记录) -->
+    <div class="row">
         <div class="col-md-12">
-            <div class="card">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">{% if result_search %}搜索结果{% else %}最近录入的成绩{% endif %}</h5>
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">今日比赛</h5>
+                    {% set display_results = searched_results if result_search else recorded_results %}
+                    {% if display_results %}
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>比赛ID</th>
+                                    <th>时间</th>
                                     <th>项目名称</th>
-                                    <th>分组</th>
-                                    <th>场地</th>
-                                    <th>开始时间</th>
-                                    <th>状态</th>
+                                    <th>学生姓名</th>
+                                    <th>成绩</th>
+                                    <th>名次</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for competition in today_competitions %}
+                                {% for result in display_results %}
                                 <tr>
-                                    <td>{{ competition.CompetitionID }}</td>
-                                    <td>{{ competition.EventName }}</td>
-                                    <td>{{ competition.GroupName }}</td>
-                                    <td>{{ competition.VenueName }}</td>
-                                    <td>{{ competition.ScheduledStartTime.strftime('%H:%M') }}</td>
+                                    <td>{{ result.RecordTime.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ result.EventName }}</td>
+                                    <td>{{ result.StudentName }}</td>
+                                    <td>{{ result.Value }}</td>
+                                    <td>{{ result.Ranking }}</td>
                                     <td>
-                                        <span class="badge {% if competition.Status == '进行中' %}bg-success{% elif competition.Status == '未开始' %}bg-warning{% else %}bg-secondary{% endif %}">
-                                            {{ competition.Status }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <a href="{{ url_for('main.record_result', competition_id=competition.CompetitionID) }}" 
-                                           class="btn btn-sm btn-primary {% if competition.Status != '进行中' %}disabled{% endif %}">
-                                            录入成绩
+                                        <a href="{{ url_for('main.edit_result', result_id=result.ResultID) }}" 
+                                           class="btn btn-warning btn-sm">
+                                            修改
                                         </a>
+                                        <form action="{{ url_for('main.delete_result', result_id=result.ResultID) }}" 
+                                              method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-danger btn-sm" 
+                                                    onclick="return confirm('确定要删除这条成绩记录吗？')">
+                                                删除
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
+                    {% else %}
+                    <p class="text-muted">{% if result_search %}没有找到匹配的成绩记录。{% else %}暂无成绩记录{% endif %}</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row">
+    <!-- 今日比赛 (不受成绩搜索影响) -->
+    <div class="row mb-4">
         <div class="col-md-12">
             <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">今日比赛安排</h5>
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">已录入成绩</h5>
+                    {% if today_competitions %}
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>比赛ID</th>
+                                    <th>时间</th>
                                     <th>项目名称</th>
-                                    <th>学生姓名</th>
-                                    <th>成绩</th>
-                                    <th>名次</th>
-                                    <th>录入时间</th>
+                                    <th>场地</th>
+                                    <th>状态</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for result in recorded_results %}
+                                {% for comp in today_competitions %}
                                 <tr>
-                                    <td>{{ result.CompetitionID }}</td>
-                                    <td>{{ result.EventName }}</td>
-                                    <td>{{ result.StudentName }}</td>
-                                    <td>{{ result.Value }}</td>
-                                    <td>{{ result.Ranking }}</td>
-                                    <td>{{ result.RecordTime.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ comp.ScheduledStartTime.strftime('%H:%M') }}</td>
+                                    <td>{{ comp.EventName }}</td>
+                                    <td>{{ comp.VenueName }}</td>
                                     <td>
-                                        <a href="{{ url_for('main.edit_result', result_id=result.ResultID) }}" 
-                                           class="btn btn-sm btn-warning">
-                                            修改
+                                        <span class="badge {% if comp.Status == '进行中' %}bg-success
+                                                          {% elif comp.Status == '已结束' %}bg-secondary
+                                                          {% elif comp.Status == '未开始' %}bg-primary
+                                                          {% else %}bg-warning{% endif %}">
+                                            {{ comp.Status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if comp.Status == '已结束' %}
+                                        <a href="{{ url_for('main.record_result', competition_id=comp.CompetitionID) }}" 
+                                           class="btn btn-primary btn-sm">
+                                            录入成绩
                                         </a>
+                                        {% endif %}
                                     </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
+                    {% else %}
+                    <p class="text-muted">今日暂无比赛安排</p>
+                    {% endif %}
                 </div>
             </div>
         </div>

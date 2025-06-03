@@ -41,6 +41,21 @@
                             <div class="invalid-feedback">请选择比赛场地</div>
                         </div>
 
+                        <!-- 主持裁判 -->
+                        <div class="mb-3">
+                            <label for="referee_id" class="form-label">主持裁判</label>
+                            <select class="form-select" id="referee_id" name="referee_id" required>
+                                <option value="">请选择主持裁判</option>
+                                {% for referee in referees %}
+                                <option value="{{ referee.RefereeID }}" 
+                                        {% if referee.RefereeID == competition.RefereeID %}selected{% endif %}>
+                                    {{ referee.Name }} ({{ referee.Title }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">请选择主持裁判</div>
+                        </div>
+
                         <!-- 计划开始时间 -->
                         <div class="mb-3">
                             <label for="scheduled_start_time" class="form-label">计划开始时间</label>

@@ -4,11 +4,33 @@
 <div class="container mt-4">
     <h2>报名审核</h2>
     
+    <!-- 批量审核表单 -->
+    <form method="POST" action="{{ url_for('main.batch_approve_registrations') }}" class="mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">批量审核</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">审核意见</label>
+                    <textarea class="form-control" name="batch_note" rows="2"></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" name="action" value="approve" class="btn btn-success">批量通过</button>
+                    <button type="submit" name="action" value="reject" class="btn btn-danger">批量拒绝</button>
+                </div>
+            </div>
+        </div>
+    </form>
+    
     {% if registrations %}
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
                 <tr>
+                    <th>
+                        <input type="checkbox" id="select-all" class="form-check-input">
+                    </th>
                     <th>报名ID</th>
                     <th>学生姓名</th>
                     <th>比赛项目</th>
@@ -20,6 +42,10 @@
             <tbody>
                 {% for reg in registrations %}
                 <tr>
+                    <td>
+                        <input type="checkbox" name="selected_registrations" value="{{ reg.RegistrationID }}" 
+                               class="form-check-input registration-checkbox">
+                    </td>
                     <td>{{ reg.RegistrationID }}</td>
                     <td>{{ reg.StudentName }}</td>
                     <td>{{ reg.EventName }}</td>
@@ -32,6 +58,11 @@
                                 data-bs-toggle="modal" 
                                 data-bs-target="#approveModal{{ reg.RegistrationID }}">
                             审核
+                        </button>
+                        <button type="button" class="btn btn-sm btn-info" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#historyModal{{ reg.RegistrationID }}">
+                            历史
                         </button>
                     </td>
                 </tr>
@@ -60,6 +91,52 @@
                         </div>
                     </div>
                 </div>
+                
+                <!-- 审核历史模态框 -->
+                <div class="modal fade" id="historyModal{{ reg.RegistrationID }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">审核历史</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                {% if reg.audits %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>审核时间</th>
+                                                <th>审核人</th>
+                                                <th>审核结果</th>
+                                                <th>审核意见</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for audit in reg.audits %}
+                                            <tr>
+                                                <td>{{ audit.AuditTime.strftime('%Y-%m-%d %H:%M') }}</td>
+                                                <td>{{ audit.admin.Name }}</td>
+                                                <td>
+                                                    <span class="badge {% if audit.AuditStatus == '通过' %}bg-success{% else %}bg-danger{% endif %}">
+                                                        {{ audit.AuditStatus }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ audit.AuditNote }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-info">
+                                    暂无审核历史记录。
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 {% endfor %}
             </tbody>
         </table>
@@ -70,4 +147,15 @@
     </div>
     {% endif %}
 </div>
+
+{% block scripts %}
+<script>
+document.getElementById('select-all').addEventListener('change', function() {
+    document.querySelectorAll('.registration-checkbox').forEach(checkbox => {
+        checkbox.checked = this.checked;
+    });
+});
+</script>
+{% endblock %}
+
 {% endblock %} 

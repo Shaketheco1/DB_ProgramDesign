@@ -1,59 +1,209 @@
 {% extends "base.html" %}
 
-{% block title %}学生面板 - 校园体育管理系统{% endblock %}
+{% block title %}学生仪表盘{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h2>学生仪表板</h2>
+    <h2 class="mb-4">学生仪表盘</h2>
     
+    <!-- 快捷操作 -->
     <div class="row mb-4">
-        <div class="col">
-            <a href="{{ url_for('main.register_event') }}" class="btn btn-primary">报名新赛事</a>
-            <a href="{{ url_for('main.view_results') }}" class="btn btn-info">查看成绩</a>
-            <a href="{{ url_for('main.edit_profile') }}" class="btn btn-secondary">编辑个人信息</a>
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">快捷操作</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <a href="{{ url_for('main.register_event') }}" class="btn btn-outline-primary btn-lg w-100 mb-3">
+                                <i class="fas fa-plus-circle"></i><br>
+                                报名比赛
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="{{ url_for('main.view_results') }}" class="btn btn-outline-success btn-lg w-100 mb-3">
+                                <i class="fas fa-medal"></i><br>
+                                查看成绩
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="{{ url_for('main.edit_profile') }}" class="btn btn-outline-info btn-lg w-100 mb-3">
+                                <i class="fas fa-user-edit"></i><br>
+                                修改信息
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    
-    <h3>我的报名记录</h3>
-    {% if registrations %}
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>报名ID</th>
-                    <th>比赛项目</th>
-                    <th>项目类型</th>
-                    <th>报名时间</th>
-                    <th>状态</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for reg in registrations %}
-                <tr>
-                    <td>{{ reg.RegistrationID }}</td>
-                    <td>{{ reg.EventName }}</td>
-                    <td>{{ reg.EventType }}</td>
-                    <td>{{ reg.RegistrationTime.strftime('%Y-%m-%d %H:%M') }}</td>
-                    <td>
-                        {% if reg.Status == '待审核' %}
-                        <span class="badge bg-warning">待审核</span>
-                        {% elif reg.Status == '已通过' %}
-                        <span class="badge bg-success">已通过</span>
-                        {% elif reg.Status == '已拒绝' %}
-                        <span class="badge bg-danger">已拒绝</span>
-                        {% else %}
-                        <span class="badge bg-secondary">{{ reg.Status }}</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+    <!-- 报名记录搜索 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">搜索我的报名记录</h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-5">
+                        <label for="registration_event_search" class="visually-hidden">搜索项目名称</label>
+                        <input type="text" class="form-control" id="registration_event_search" name="registration_event_search" placeholder="按项目名称搜索" value="{{ registration_event_search or '' }}">
+                    </div>
+                    <div class="col-md-4">
+                         <label for="registration_status_search" class="visually-hidden">按状态搜索</label>
+                         <select class="form-select" id="registration_status_search" name="registration_status_search">
+                             <option value="">所有状态</option>
+                             <option value="待审核" {% if registration_status_search == '待审核' %}selected{% endif %}>待审核</option>
+                             <option value="已通过" {% if registration_status_search == '已通过' %}selected{% endif %}>已通过</option>
+                             <option value="已拒绝" {% if registration_status_search == '已拒绝' %}selected{% endif %}>已拒绝</option>
+                             <option value="已取消" {% if registration_status_search == '已取消' %}selected{% endif %}>已取消</option>
+                         </select>
+                    </div>
+                     <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">搜索</button>
+                        <a href="{{ url_for('main.student_dashboard') }}" class="btn btn-secondary">重置</a>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
-    {% else %}
-    <div class="alert alert-info">
-        您还没有任何报名记录。
+
+    <!-- 我的报名记录 (搜索结果或全部记录) -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">{% if registration_event_search or registration_status_search %}报名搜索结果{% else %}我的报名记录{% endif %}</h5>
+                </div>
+                <div class="card-body">
+                    {% set display_registrations = searched_registrations if registration_event_search or registration_status_search else registrations %}
+                    {% if display_registrations %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>报名时间</th>
+                                    <th>项目名称</th>
+                                    <th>项目类型</th>
+                                    <th>状态</th>
+                                    <th>审核时间</th>
+                                    <th>审核意见</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reg in display_registrations %}
+                                <tr>
+                                    <td>{{ reg.RegistrationTime.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ reg.EventName }}</td>
+                                    <td>{{ reg.EventType }}</td>
+                                    <td>
+                                        <span class="badge {% if reg.Status == '已通过' %}bg-success
+                                                          {% elif reg.Status == '已拒绝' %}bg-danger
+                                                          {% elif reg.Status == '已取消' %}bg-secondary
+                                                          {% else %}bg-warning{% endif %}">
+                                            {{ reg.Status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if reg.ApprovalTime %}
+                                        {{ reg.ApprovalTime.strftime('%Y-%m-%d %H:%M') }}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ reg.ApprovalNote or '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">{% if registration_event_search or registration_status_search %}没有找到匹配的报名记录。{% else %}暂无报名记录{% endif %}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
-    {% endif %}
+
+    <!-- 比赛成绩搜索 -->
+     <div class="card mt-4 mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">搜索我的比赛成绩</h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md">
+                        <label for="result_event_search" class="visually-hidden">搜索项目名称</label>
+                        <input type="text" class="form-control" id="result_event_search" name="result_event_search" placeholder="按项目名称搜索" value="{{ result_event_search or '' }}">
+                    </div>
+                    <div class="col-md">
+                         <label for="result_group_search" class="visually-hidden">按分组搜索</label>
+                         <input type="text" class="form-control" id="result_group_search" name="result_group_search" placeholder="按分组搜索" value="{{ result_group_search or '' }}">
+                    </div>
+                     <div class="col-auto">
+                        <button type="submit" class="btn btn-primary">搜索</button>
+                        <a href="{{ url_for('main.student_dashboard') }}" class="btn btn-secondary">重置</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 我的比赛成绩 (搜索结果或全部记录)-->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">{% if result_event_search or result_group_search %}成绩搜索结果{% else %}我的比赛成绩{% endif %}</h5>
+                </div>
+                <div class="card-body">
+                     {% set display_results = searched_results if result_event_search or result_group_search else results %}
+                    {% if display_results %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>比赛时间</th>
+                                    <th>项目名称</th>
+                                    <th>分组</th>
+                                    <th>成绩</th>
+                                    <th>名次</th>
+                                    <th>积分</th>
+                                    <th>是否破纪录</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in display_results %}
+                                <tr>
+                                    <td>{{ result.ScheduledStartTime.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ result.EventName }}</td>
+                                    <td>{{ result.GroupName or '-' }}</td>
+                                    <td>{{ result.Value }}</td>
+                                    <td>{{ result.Ranking }}</td>
+                                    <td>{{ result.Score }}</td>
+                                    <td>
+                                        {% if result.IsRecordBreaking %}
+                                        <span class="badge bg-danger">{{ result.RecordType or '' }}</span>{# 修正记录类型显示 #}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">{% if result_event_search or result_group_search %}没有找到匹配的成绩记录。{% else %}暂无比赛成绩{% endif %}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+
 </div>
 {% endblock %} 

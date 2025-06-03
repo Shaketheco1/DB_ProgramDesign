@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}管理员面板 - 校运会管理系统{% endblock %}
+{% block title %}管理员仪表盘{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h2>管理员仪表板</h2>
+    <h2 class="mb-4">管理员仪表盘</h2>
     
     <!-- 统计卡片 -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card text-white bg-primary">
+            <div class="card bg-primary text-white">
                 <div class="card-body">
                     <h5 class="card-title">总用户数</h5>
                     <p class="card-text display-4">{{ stats.total_users }}</p>
@@ -17,91 +17,470 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card text-white bg-success">
+            <div class="card bg-success text-white">
                 <div class="card-body">
-                    <h5 class="card-title">进行中比赛</h5>
+                    <h5 class="card-title">进行中的比赛</h5>
                     <p class="card-text display-4">{{ stats.active_events }}</p>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card text-white bg-info">
+            <div class="card bg-info text-white">
                 <div class="card-body">
-                    <h5 class="card-title">今日报名</h5>
+                    <h5 class="card-title">今日报名数</h5>
                     <p class="card-text display-4">{{ stats.today_registrations }}</p>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card text-white bg-warning">
+            <div class="card bg-warning text-white">
                 <div class="card-body">
-                    <h5 class="card-title">待审核报名</h5>
+                    <h5 class="card-title">待审核项目</h5>
                     <p class="card-text display-4">{{ stats.pending_approvals }}</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 功能导航 -->
-    <div class="row">
-        <div class="col-md-6">
+    <!-- 快捷操作 -->
+    <div class="row mb-4">
+        <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">赛事管理</h5>
+                    <h5 class="mb-0">快捷操作</h5>
                 </div>
-                <div class="list-group list-group-flush">
-                    <a href="{{ url_for('main.manage_events') }}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-running"></i> 比赛项目管理
-                    </a>
-                    <a href="{{ url_for('main.manage_venues') }}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-map-marker-alt"></i> 场地管理
-                    </a>
-                    <a href="{{ url_for('main.manage_competitions') }}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-calendar-alt"></i> 赛程安排
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">用户管理</h5>
-                </div>
-                <div class="list-group list-group-flush">
-                    <a href="{{ url_for('main.students') }}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-user-graduate"></i> 学生管理
-                    </a>
-                    <a href="{{ url_for('main.manage_referees') }}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-user-tie"></i> 裁判管理
-                    </a>
-                    <a href="{{ url_for('main.manage_admins') }}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-user-shield"></i> 管理员管理
-                    </a>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('main.manage_events') }}" class="btn btn-outline-primary btn-lg w-100 mb-3">
+                                <i class="fas fa-running"></i><br>
+                                比赛项目管理
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('main.manage_venues') }}" class="btn btn-outline-success btn-lg w-100 mb-3">
+                                <i class="fas fa-map-marker-alt"></i><br>
+                                场地管理
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('main.manage_competitions') }}" class="btn btn-outline-info btn-lg w-100 mb-3">
+                                <i class="fas fa-calendar-alt"></i><br>
+                                赛程安排
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('main.manage_registrations') }}" class="btn btn-outline-warning btn-lg w-100 mb-3">
+                                <i class="fas fa-clipboard-list"></i><br>
+                                报名审核
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 系统管理 -->
-    <div class="row mt-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">系统管理</h5>
+    <!-- 搜索功能 -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">信息查询</h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                <div class="row g-3">
+                    <div class="col-md">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="student_search" name="student_search" placeholder="搜索学生姓名或学号" value="{{ student_search or '' }}">
+                            <label for="student_search">搜索学生 (姓名/学号)</label>
+                        </div>
+                    </div>
+                    <div class="col-md">
+                         <div class="form-floating">
+                            <input type="text" class="form-control" id="registration_search" name="registration_search" placeholder="搜索报名学生姓名或项目名称" value="{{ registration_search or '' }}">
+                            <label for="registration_search">搜索报名 (学生/项目)</label>
+                        </div>
+                    </div>
+                     <div class="col-md">
+                         <div class="form-floating">
+                            <input type="text" class="form-control" id="competition_search" name="competition_search" placeholder="搜索项目名称或场地名称" value="{{ competition_search or '' }}">
+                            <label for="competition_search">搜索比赛 (项目/场地)</label>
+                        </div>
+                    </div>
+                     <div class="col-md">
+                         <div class="form-floating">
+                            <input type="text" class="form-control" id="result_search" name="result_search" placeholder="搜索成绩学生姓名或项目名称" value="{{ result_search or '' }}">
+                            <label for="result_search">搜索成绩 (学生/项目)</label>
+                        </div>
+                    </div>
+                    <div class="col-auto align-self-center">
+                        <button type="submit" class="btn btn-primary">搜索</button>
+                         <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-secondary">重置</a>
+                    </div>
                 </div>
-                <div class="list-group list-group-flush">
-                    <a href="{{ url_for('main.system_settings') }}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-cogs"></i> 系统设置
-                    </a>
-                    <a href="{{ url_for('main.data_analysis') }}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-chart-bar"></i> 数据分析
-                    </a>
-                    <a href="{{ url_for('main.backup_restore') }}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-database"></i> 备份与恢复
-                    </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- 搜索结果 -->
+    {% if student_search or registration_search or competition_search or result_search %}
+    <div class="mb-4">
+        {% if searched_students %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">学生搜索结果</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>学号</th>
+                                <th>姓名</th>
+                                <th>性别</th>
+                                <th>班级</th>
+                                <th>院系</th>
+                                <th>电话</th>
+                                <th>邮箱</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in searched_students %}
+                            <tr>
+                                <td>{{ student.StudentID }}</td>
+                                <td>{{ student.Name }}</td>
+                                <td>{{ student.Gender }}</td>
+                                <td>{{ student.ClassName }}</td>
+                                <td>{{ student.Department }}</td>
+                                <td>{{ student.Phone or '-' }}</td>
+                                <td>{{ student.Email or '-' }}</td>
+                                <td>
+                                    <a href="{{ url_for('main.edit_student', student_id=student.StudentID) }}" class="btn btn-warning btn-sm">编辑</a>
+                                    <form action="{{ url_for('main.delete_student', student_id=student.StudentID) }}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('确定要删除该学生吗？')">删除</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% elif searched_registrations %}
+         <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">报名搜索结果 (待审核)</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>报名时间</th>
+                                <th>学生姓名</th>
+                                <th>班级</th>
+                                <th>项目名称</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reg in searched_registrations %}
+                            <tr>
+                                <td>{{ reg.RegistrationTime.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>{{ reg.StudentName }}</td>
+                                <td>{{ reg.ClassName }}</td>
+                                <td>{{ reg.EventName }}</td>
+                                <td>
+                                    <form action="{{ url_for('main.review_registration', registration_id=reg.RegistrationID) }}" method="post" class="d-inline">
+                                        <input type="hidden" name="action" value="approve">
+                                        <button type="submit" class="btn btn-success btn-sm">通过</button>
+                                    </form>
+                                    <form action="{{ url_for('main.review_registration', registration_id=reg.RegistrationID) }}" method="post" class="d-inline">
+                                        <input type="hidden" name="action" value="reject">
+                                        <button type="submit" class="btn btn-danger btn-sm">拒绝</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% elif searched_competitions %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">比赛安排搜索结果</h5>
+            </div>
+            <div class="card-body">
+                {% if searched_competitions %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>项目名称</th>
+                                <th>场地</th>
+                                <th>裁判</th>
+                                <th>状态</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for comp in searched_competitions %}
+                            <tr>
+                                <td>{{ comp.ScheduledStartTime.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>{{ comp.EventName }}</td>
+                                <td>{{ comp.VenueName }}</td>
+                                <td>{{ comp.RefereeName or '-' }}</td>
+                                <td>
+                                    <span class="badge {% if comp.Status == '进行中' %}bg-success
+                                                      {% elif comp.Status == '已结束' %}bg-secondary
+                                                      {% elif comp.Status == '未开始' %}bg-primary
+                                                      {% else %}bg-warning{% endif %}">
+                                        {{ comp.Status }}
+                                    </span>
+                                </td>
+                                <td>
+                                     <a href="{{ url_for('main.edit_competition', competition_id=comp.CompetitionID) }}" class="btn btn-warning btn-sm">编辑</a>
+                                    <form action="{{ url_for('main.delete_competition', competition_id=comp.CompetitionID) }}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('确定要删除该赛程吗？')">删除</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                 {% else %}
+                    <p class="text-muted">没有找到匹配的比赛安排。</p>
+                 {% endif %}
+            </div>
+        </div>
+        {% elif searched_results %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">成绩搜索结果</h5>
+            </div>
+            <div class="card-body">
+                {% if searched_results %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>学生</th>
+                                <th>项目</th>
+                                <th>分组</th>
+                                <th>成绩</th>
+                                <th>名次</th>
+                                <th>积分</th>
+                                <th>录入裁判</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in searched_results %}
+                            <tr>
+                                <td>{{ result.RecordTime.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>{{ result.StudentName }}</td>
+                                <td>{{ result.EventName }}</td>
+                                <td>{{ result.GroupName or '-' }}</td>
+                                <td>{{ result.Value }}</td>
+                                <td>{{ result.Ranking }}</td>
+                                <td>{{ result.Score }}</td>
+                                <td>{{ result.RefereeName }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                 {% else %}
+                    <p class="text-muted">没有找到匹配的成绩记录。</p>
+                 {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="card mb-4">
+            <div class="card-body">
+                 <p class="text-muted">没有找到匹配的信息。</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% else %}
+    <!-- 待审核报名记录 -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">待审核报名记录</h5>
+            <a href="{{ url_for('main.manage_registrations') }}" class="btn btn-primary btn-sm">查看全部</a>
+        </div>
+        <div class="card-body">
+            {% if recent_registrations %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>报名时间</th>
+                            <th>学生姓名</th>
+                            <th>班级</th>
+                            <th>项目名称</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reg in recent_registrations %}
+                        <tr>
+                            <td>{{ reg.RegistrationTime.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ reg.StudentName }}</td>
+                            <td>{{ reg.ClassName }}</td>
+                            <td>{{ reg.EventName }}</td>
+                            <td>
+                                <form action="{{ url_for('main.review_registration', registration_id=reg.RegistrationID) }}" method="post" class="d-inline">
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" class="btn btn-success btn-sm">通过</button>
+                                </form>
+                                <form action="{{ url_for('main.review_registration', registration_id=reg.RegistrationID) }}" method="post" class="d-inline">
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit" class="btn btn-danger btn-sm">拒绝</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">暂无待审核的报名记录</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 今日比赛安排 -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">今日比赛安排</h5>
+            <a href="{{ url_for('main.manage_competitions') }}" class="btn btn-primary btn-sm">查看全部</a>
+        </div>
+        <div class="card-body">
+            {% if today_competitions %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>项目名称</th>
+                            <th>场地</th>
+                            <th>裁判</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for comp in today_competitions %}
+                        <tr>
+                            <td>{{ comp.ScheduledStartTime.strftime('%H:%M') }}</td>
+                            <td>{{ comp.EventName }}</td>
+                            <td>{{ comp.VenueName }}</td>
+                            <td>{{ comp.RefereeName or '-' }}</td>
+                            <td>
+                                <span class="badge {% if comp.Status == '进行中' %}bg-success
+                                                          {% elif comp.Status == '已结束' %}bg-secondary
+                                                          {% elif comp.Status == '未开始' %}bg-primary
+                                                          {% else %}bg-warning{% endif %}">
+                                    {{ comp.Status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">今日暂无比赛安排</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- 成绩记录和班级统计 -->
+    <div class="row">
+        <!-- 最近成绩记录 -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">最近成绩记录</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_results %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>学生</th>
+                                    <th>项目</th>
+                                    <th>成绩</th>
+                                    <th>名次</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for result in recent_results %}
+                                <tr>
+                                    <td>{{ result.RecordTime.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ result.StudentName }}</td>
+                                    <td>{{ result.EventName }}</td>
+                                    <td>{{ result.Value }}</td>
+                                    <td>{{ result.Ranking }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">暂无成绩记录</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 班级报名统计 -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">班级报名统计</h5>
+                </div>
+                <div class="card-body">
+                    {% if class_stats %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>班级</th>
+                                    <th>院系</th>
+                                    <th>报名人数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in class_stats %}
+                                <tr>
+                                    <td>{{ stat.ClassName }}</td>
+                                    <td>{{ stat.Department }}</td>
+                                    <td>{{ stat.registration_count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">暂无班级报名统计</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %} 

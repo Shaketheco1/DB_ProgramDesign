@@ -44,6 +44,16 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="referee_id" class="form-label">主持裁判</label>
+                            <select class="form-select" id="referee_id" name="referee_id" required>
+                                <option value="">请选择主持裁判</option>
+                                {% for referee in referees %}
+                                <option value="{{ referee.RefereeID }}">{{ referee.Name }} ({{ referee.Title }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
                             <label for="scheduled_start_time" class="form-label">计划开始时间</label>
                             <input type="datetime-local" class="form-control" id="scheduled_start_time" 
                                    name="scheduled_start_time" required>
