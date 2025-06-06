@@ -71,11 +71,12 @@ def admin_dashboard():
         flash('您没有权限访问此页面！', 'error')
         return redirect(url_for('main.index'))
         
-    # 获取搜索参数
-    student_search = request.form.get('student_search')
-    registration_search = request.form.get('registration_search')
-    competition_search = request.form.get('competition_search')
-    result_search = request.form.get('result_search')
+    # 获取搜索参数（同时支持 GET 和 POST）
+    student_search = request.values.get('student_search')
+    registration_search = request.values.get('registration_search')
+    competition_search = request.values.get('competition_search')
+    result_search = request.values.get('result_search')
+    result_class_search = request.values.get('result_class_search') # 添加按班级搜索参数
 
     conn = db.get_db()
     with conn.cursor() as cursor:
@@ -103,6 +104,26 @@ def admin_dashboard():
             'today_registrations': today_registrations,
             'pending_approvals': pending_approvals
         }
+
+        # 获取班级积分排名
+        cursor.execute('''
+            SELECT
+                c.ClassID,
+                c.ClassName,
+                c.Department,
+                SUM(r.Score) AS total_score
+            FROM
+                Result r
+            JOIN
+                Student s ON r.StudentID = s.StudentID
+            JOIN
+                Class c ON s.ClassID = c.ClassID
+            GROUP BY
+                c.ClassID, c.ClassName, c.Department
+            ORDER BY
+                total_score DESC
+        ''')
+        class_rankings = cursor.fetchall()
 
         # 获取最近的待审核报名记录 (如果未进行报名搜索)
         recent_registrations = []
@@ -133,18 +154,19 @@ def admin_dashboard():
             ''')
             today_competitions = cursor.fetchall()
 
-        # 获取最近的成绩记录 (如果未进行成绩搜索)
+        # 获取最近的成绩记录 (如果未进行成绩搜索或班级搜索)
         recent_results = []
-        if not result_search:
+        if not result_search and not result_class_search:
             cursor.execute('''
-                SELECT r.*, s.Name AS StudentName, e.EventName, c.GroupName,
-                       v.VenueName, ref.Name AS RefereeName
+                SELECT r.*, c.ScheduledStartTime, s.Name AS StudentName, e.EventName, c.GroupName,
+                       v.VenueName, ref.Name AS RefereeName, s.StudentID, cl.ClassName, cl.Department
                 FROM Result r
                 JOIN Competition c ON r.CompetitionID = c.CompetitionID
                 JOIN Event e ON c.EventID = e.EventID
                 JOIN Student s ON r.StudentID = s.StudentID
                 JOIN Venue v ON c.VenueID = v.VenueID
                 JOIN Referee ref ON r.RefereeID = ref.RefereeID
+                JOIN Class cl ON s.ClassID = cl.ClassID # 加入 Class 表
                 ORDER BY r.RecordTime DESC
                 LIMIT 5
             ''')
@@ -165,7 +187,6 @@ def admin_dashboard():
         # 根据搜索条件进行查询
         searched_students = []
         if student_search:
-            # 简单示例：按学生姓名或学号搜索
             search_pattern = f'%%{student_search}%%'
             cursor.execute('''
                 SELECT s.*, c.ClassName, c.Department
@@ -178,7 +199,6 @@ def admin_dashboard():
 
         searched_registrations = []
         if registration_search:
-            # 简单示例：按学生姓名或项目名称搜索待审核报名
             search_pattern = f'%%{registration_search}%%'
             cursor.execute('''
                 SELECT r.*, s.Name AS StudentName, e.EventName, e.EventType,
@@ -191,12 +211,9 @@ def admin_dashboard():
                 ORDER BY r.RegistrationTime DESC
             ''', (search_pattern, search_pattern))
             searched_registrations = cursor.fetchall()
-            # 如果进行了报名搜索，则不显示最近的待审核报名
-            recent_registrations = []
 
         searched_competitions = []
         if competition_search:
-            # 简单示例：按项目名称或场地名称搜索比赛安排
             search_pattern = f'%%{competition_search}%%'
             cursor.execute('''
                 SELECT c.*, e.EventName, v.VenueName, r.Name AS RefereeName
@@ -208,32 +225,42 @@ def admin_dashboard():
                 ORDER BY c.ScheduledStartTime DESC
             ''', (search_pattern, search_pattern))
             searched_competitions = cursor.fetchall()
-            # 如果进行了比赛搜索，则不显示今日比赛安排
-            today_competitions = []
 
         searched_results = []
-        if result_search:
-            # 简单示例：按学生姓名或项目名称搜索成绩记录
-            search_pattern = f'%%{result_search}%%'
-            cursor.execute('''
-                SELECT r.*, s.Name AS StudentName, e.EventName, c.GroupName,
-                       v.VenueName, ref.Name AS RefereeName
+        if result_search or result_class_search:
+            result_search_pattern = f'%%{result_search}%%'
+            result_class_search_pattern = f'%%{result_class_search}%%'
+            
+            result_query = '''
+                SELECT r.*, c.ScheduledStartTime, s.Name AS StudentName, e.EventName, c.GroupName,
+                       v.VenueName, ref.Name AS RefereeName, s.StudentID, cl.ClassName, cl.Department
                 FROM Result r
                 JOIN Competition c ON r.CompetitionID = c.CompetitionID
                 JOIN Event e ON c.EventID = e.EventID
                 JOIN Student s ON r.StudentID = s.StudentID
                 JOIN Venue v ON c.VenueID = v.VenueID
                 JOIN Referee ref ON r.RefereeID = ref.RefereeID
-                WHERE s.Name LIKE %s OR e.EventName LIKE %s
-                ORDER BY r.RecordTime DESC
-            ''', (search_pattern, search_pattern))
-            searched_results = cursor.fetchall()
-            # 如果进行了成绩搜索，则不显示最近成绩记录
-            recent_results = []
+                JOIN Class cl ON s.ClassID = cl.ClassID # 加入 Class 表
+                WHERE 1=1  # 占位符，方便后续添加AND条件
+            '''
+            result_query_params = []
 
+            if result_search:
+                result_query += ' AND (s.Name LIKE %s OR e.EventName LIKE %s)'
+                result_query_params.extend([result_search_pattern, result_search_pattern])
+
+            if result_class_search:
+                result_query += ' AND (cl.ClassName LIKE %s OR cl.Department LIKE %s)' # 按班级名称或系别搜索
+                result_query_params.extend([result_class_search_pattern, result_class_search_pattern])
+
+            result_query += ' ORDER BY r.RecordTime DESC'
+
+            cursor.execute(result_query, result_query_params)
+            searched_results = cursor.fetchall()
 
     return render_template('admin/dashboard.html', 
                          stats=stats,
+                         class_rankings=class_rankings, # 传递班级积分排名数据
                          recent_registrations=recent_registrations,
                          today_competitions=today_competitions,
                          recent_results=recent_results,
@@ -245,7 +272,8 @@ def admin_dashboard():
                          student_search=student_search,
                          registration_search=registration_search,
                          competition_search=competition_search,
-                         result_search=result_search)
+                         result_search=result_search,
+                         result_class_search=result_class_search) # 传递班级搜索参数到模板
 
 # 比赛项目管理
 @app.route('/admin/events')
@@ -307,9 +335,10 @@ def manage_venues():
         flash('您没有权限访问此页面！', 'error')
         return redirect(url_for('main.index'))
         
-    venues = db.session.execute(
-        text('SELECT * FROM Venue ORDER BY VenueID')
-    ).fetchall()
+    conn = db.get_db()
+    with conn.cursor() as cursor:
+        cursor.execute('SELECT * FROM Venue ORDER BY VenueID')
+        venues = cursor.fetchall()
     
     return render_template('admin/venues.html', venues=venues)
 
@@ -329,25 +358,18 @@ def add_venue():
             location = request.form.get('location')
             capacity = request.form.get('capacity')
             
-            db.session.execute(
-                text('''
+            conn = db.get_db()
+            with conn.cursor() as cursor:
+                cursor.execute('''
                     INSERT INTO Venue (VenueID, VenueName, VenueType, Location, Capacity, Status)
-                    VALUES (:venue_id, :venue_name, :venue_type, :location, :capacity, '可用')
-                '''),
-                {
-                    'venue_id': venue_id,
-                    'venue_name': venue_name,
-                    'venue_type': venue_type,
-                    'location': location,
-                    'capacity': capacity
-                }
-            )
-            db.session.commit()
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                ''', (venue_id, venue_name, venue_type, location, capacity, '可用'))
+                conn.commit()
             flash('场地添加成功！', 'success')
             return redirect(url_for('main.manage_venues'))
             
         except Exception as e:
-            db.session.rollback()
+            conn.rollback()
             flash('添加失败，请重试！', 'error')
             return redirect(url_for('main.add_venue'))
             
@@ -521,21 +543,18 @@ def manage_competition_results(competition_id):
         flash('您没有权限访问此页面！', 'error')
         return redirect(url_for('main.index'))
     
-    # 检查当前裁判是否是这场比赛的主持裁判
-    competition = db.session.execute(
-        text('''
+    conn = db.get_db()
+    with conn.cursor() as cursor:
+        # 检查当前裁判是否是这场比赛的主持裁判
+        cursor.execute('''
             SELECT c.*, e.EventName, v.VenueName
             FROM Competition c
             JOIN Event e ON c.EventID = e.EventID
             JOIN Venue v ON c.VenueID = v.VenueID
-            WHERE c.CompetitionID = :competition_id
-            AND c.RefereeID = :referee_id
-        '''),
-        {
-            'competition_id': competition_id,
-            'referee_id': current_user.id
-        }
-    ).first()
+            WHERE c.CompetitionID = %s
+            AND c.RefereeID = %s
+        ''', (competition_id, current_user.id))
+        competition = cursor.fetchone()
     
     if not competition:
         flash('您不是这场比赛的主持裁判！', 'error')
@@ -550,99 +569,71 @@ def manage_competition_results(competition_id):
             is_record_breaking = request.form.get('is_record_breaking') == 'true'
             record_type = request.form.get('record_type') if is_record_breaking else None
             
-            # 检查是否已经录入过该学生的成绩
-            existing_result = db.session.execute(
-                text('''
+            conn = db.get_db()
+            with conn.cursor() as cursor:
+                # 检查是否已经录入过该学生的成绩
+                cursor.execute('''
                     SELECT * FROM Result 
-                    WHERE CompetitionID = :competition_id 
-                    AND StudentID = :student_id
-                '''),
-                {
-                    'competition_id': competition_id,
-                    'student_id': student_id
-                }
-            ).first()
-            
-            if existing_result:
-                # 更新已有成绩
-                db.session.execute(
-                    text('''
+                    WHERE CompetitionID = %s 
+                    AND StudentID = %s
+                ''', (competition_id, student_id))
+                existing_result = cursor.fetchone()
+                
+                if existing_result:
+                    # 更新已有成绩
+                    cursor.execute('''
                         UPDATE Result
-                        SET Value = :value,
-                            Ranking = :ranking,
-                            Score = :score,
-                            IsRecordBreaking = :is_record_breaking,
-                            RecordType = :record_type,
+                        SET Value = %s,
+                            Ranking = %s,
+                            Score = %s,
+                            IsRecordBreaking = %s,
+                            RecordType = %s,
                             RecordTime = CURRENT_TIMESTAMP
-                        WHERE CompetitionID = :competition_id
-                        AND StudentID = :student_id
-                    '''),
-                    {
-                        'value': value,
-                        'ranking': ranking,
-                        'score': score,
-                        'is_record_breaking': is_record_breaking,
-                        'record_type': record_type,
-                        'competition_id': competition_id,
-                        'student_id': student_id
-                    }
-                )
-            else:
-                # 插入新成绩
-                result_id = f"RES{datetime.now().strftime('%Y%m%d%H%M%S')}"
-                db.session.execute(
-                    text('''
+                        WHERE CompetitionID = %s
+                        AND StudentID = %s
+                    ''', (value, ranking, score, is_record_breaking,
+                          record_type, competition_id, student_id))
+                else:
+                    # 插入新成绩
+                    result_id = f"RES{datetime.now().strftime('%Y%m%d%H%M%S')}"
+                    cursor.execute('''
                         INSERT INTO Result (ResultID, CompetitionID, StudentID, Value,
                                           Ranking, Score, IsRecordBreaking, RecordType,
                                           RefereeID, RecordTime)
-                        VALUES (:result_id, :competition_id, :student_id, :value,
-                                :ranking, :score, :is_record_breaking, :record_type,
-                                :referee_id, CURRENT_TIMESTAMP)
-                    '''),
-                    {
-                        'result_id': result_id,
-                        'competition_id': competition_id,
-                        'student_id': student_id,
-                        'value': value,
-                        'ranking': ranking,
-                        'score': score,
-                        'is_record_breaking': is_record_breaking,
-                        'record_type': record_type,
-                        'referee_id': current_user.id
-                    }
-                )
-            
-            db.session.commit()
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+                    ''', (result_id, competition_id, student_id, value,
+                          ranking, score, is_record_breaking, record_type,
+                          current_user.id))
+                
+                conn.commit()
             flash('成绩保存成功！', 'success')
             return redirect(url_for('main.manage_competition_results', competition_id=competition_id))
             
         except Exception as e:
-            db.session.rollback()
+            conn.rollback()
             flash('保存失败，请重试！', 'error')
             return redirect(url_for('main.manage_competition_results', competition_id=competition_id))
     
-    # 获取已录入的成绩
-    results = db.session.execute(
-        text('''
+    conn = db.get_db()
+    with conn.cursor() as cursor:
+        # 获取已录入的成绩
+        cursor.execute('''
             SELECT r.*, s.Name AS StudentName
             FROM Result r
             JOIN Student s ON r.StudentID = s.StudentID
-            WHERE r.CompetitionID = :competition_id
+            WHERE r.CompetitionID = %s
             ORDER BY r.Ranking ASC
-        '''),
-        {'competition_id': competition_id}
-    ).fetchall()
-    
-    # 获取参赛学生列表
-    participants = db.session.execute(
-        text('''
+        ''', (competition_id,))
+        results = cursor.fetchall()
+        
+        # 获取参赛学生列表
+        cursor.execute('''
             SELECT s.*, r.RegistrationID
             FROM Student s
             JOIN Registration r ON s.StudentID = r.StudentID
-            WHERE r.EventID = :event_id AND r.Status = '已通过'
-        '''),
-        {'event_id': competition.EventID}
-    ).fetchall()
+            WHERE r.EventID = %s AND r.Status = '已通过'
+        ''', (competition['EventID'],))
+        participants = cursor.fetchall()
     
     return render_template('referee/competition_results.html',
                          competition=competition,
@@ -657,7 +648,6 @@ def students():
         flash('您没有权限访问此页面', 'danger')
         return redirect(url_for('main.index'))
     
-    # 获取所有学生信息
     conn = db.get_db()
     with conn.cursor() as cursor:
         cursor.execute('SELECT * FROM Student ORDER BY StudentID')
@@ -688,9 +678,10 @@ def manage_admins():
         flash('您没有权限访问此页面！', 'error')
         return redirect(url_for('main.index'))
         
-    admins = db.session.execute(
-        text('SELECT * FROM Administrator ORDER BY AdminID')
-    ).fetchall()
+    conn = db.get_db()
+    with conn.cursor() as cursor:
+        cursor.execute('SELECT * FROM Administrator ORDER BY AdminID')
+        admins = cursor.fetchall()
     
     return render_template('admin/admins.html', admins=admins)
 
@@ -712,13 +703,24 @@ def data_analysis():
         flash('您没有权限访问此页面！', 'error')
         return redirect(url_for('main.index'))
         
-    # 获取统计数据
-    stats = {
-        'total_events': db.session.execute(text('SELECT COUNT(*) FROM Event')).scalar(),
-        'total_competitions': db.session.execute(text('SELECT COUNT(*) FROM Competition')).scalar(),
-        'total_registrations': db.session.execute(text('SELECT COUNT(*) FROM Registration')).scalar(),
-        'total_results': db.session.execute(text('SELECT COUNT(*) FROM Result')).scalar()
-    }
+    conn = db.get_db()
+    with conn.cursor() as cursor:
+        # 获取统计数据
+        cursor.execute('SELECT COUNT(*) FROM Event')
+        total_events = cursor.fetchone()['COUNT(*)']
+        cursor.execute('SELECT COUNT(*) FROM Competition')
+        total_competitions = cursor.fetchone()['COUNT(*)']
+        cursor.execute('SELECT COUNT(*) FROM Registration')
+        total_registrations = cursor.fetchone()['COUNT(*)']
+        cursor.execute('SELECT COUNT(*) FROM Result')
+        total_results = cursor.fetchone()['COUNT(*)']
+        
+        stats = {
+            'total_events': total_events,
+            'total_competitions': total_competitions,
+            'total_registrations': total_registrations,
+            'total_results': total_results
+        }
     
     return render_template('admin/analysis.html', stats=stats)
 
@@ -740,11 +742,10 @@ def student_dashboard():
         flash('您没有权限访问此页面！', 'error')
         return redirect(url_for('main.index'))
         
-    # 获取搜索参数
-    registration_event_search = request.form.get('registration_event_search')
-    registration_status_search = request.form.get('registration_status_search')
-    result_event_search = request.form.get('result_event_search')
-    result_group_search = request.form.get('result_group_search')
+    # 获取搜索参数（同时支持 GET 和 POST）
+    registration_event_search = request.values.get('registration_event_search')
+    registration_status_search = request.values.get('registration_status_search')
+    result_event_search = request.values.get('result_event_search')
 
     conn = db.get_db()
     with conn.cursor() as cursor:
@@ -784,15 +785,9 @@ def student_dashboard():
             result_query += ' AND e.EventName LIKE %s'
             result_params.append(f'%%{result_event_search}%%')
 
-        if result_group_search:
-            result_query += ' AND c.GroupName LIKE %s'
-            result_params.append(f'%%{result_group_search}%%')
-
         result_query += ' ORDER BY c.ScheduledStartTime DESC'
 
         cursor.execute(result_query, result_params)
-        print("Executing SQL Query:", result_query)
-        print("With parameters:", result_params)
         results = cursor.fetchall()
     
     return render_template('student/dashboard.html', 
@@ -800,8 +795,7 @@ def student_dashboard():
                          results=results,
                          registration_event_search=registration_event_search,
                          registration_status_search=registration_status_search,
-                         result_event_search=result_event_search,
-                         result_group_search=result_group_search)
+                         result_event_search=result_event_search)
 
 # 裁判仪表板
 @app.route('/referee/dashboard', methods=['GET', 'POST'])
@@ -1328,45 +1322,37 @@ def edit_venue(venue_id):
             capacity = request.form.get('capacity')
             status = request.form.get('status')
             
-            db.session.execute(
-                text('''
+            conn = db.get_db()
+            with conn.cursor() as cursor:
+                cursor.execute('''
                     UPDATE Venue
-                    SET VenueName = :venue_name,
-                        VenueType = :venue_type,
-                        Location = :location,
-                        Capacity = :capacity,
-                        Status = :status
-                    WHERE VenueID = :venue_id
-                '''),
-                {
-                    'venue_id': venue_id,
-                    'venue_name': venue_name,
-                    'venue_type': venue_type,
-                    'location': location,
-                    'capacity': capacity,
-                    'status': status
-                }
-            )
-            db.session.commit()
+                    SET VenueName = %s,
+                        VenueType = %s,
+                        Location = %s,
+                        Capacity = %s,
+                        Status = %s
+                    WHERE VenueID = %s
+                ''', (venue_name, venue_type, location, capacity, status, venue_id))
+                conn.commit()
             flash('场地信息更新成功！', 'success')
             return redirect(url_for('main.manage_venues'))
             
         except Exception as e:
-            db.session.rollback()
+            conn.rollback()
             flash('更新失败，请重试！', 'error')
             return redirect(url_for('main.edit_venue', venue_id=venue_id))
             
     # 获取场地信息
-    venue = db.session.execute(
-        text('SELECT * FROM Venue WHERE VenueID = :venue_id'),
-        {'venue_id': venue_id}
-    ).first()
-    
-    if not venue:
-        flash('未找到该场地信息！', 'error')
-        return redirect(url_for('main.manage_venues'))
+    conn = db.get_db()
+    with conn.cursor() as cursor:
+        cursor.execute('SELECT * FROM Venue WHERE VenueID = %s', (venue_id,))
+        venue = cursor.fetchone()
         
-    return render_template('admin/edit_venue.html', venue=venue)
+        if not venue:
+            flash('未找到该场地信息！', 'error')
+            return redirect(url_for('main.manage_venues'))
+        
+        return render_template('admin/edit_venue.html', venue=venue)
 
 # 删除场地
 @app.route('/admin/venues/<venue_id>/delete', methods=['POST'])
@@ -1388,15 +1374,14 @@ def delete_venue(venue_id):
             return redirect(url_for('main.manage_venues'))
             
         # 删除场地
-        db.session.execute(
-            text('DELETE FROM Venue WHERE VenueID = :venue_id'),
-            {'venue_id': venue_id}
-        )
-        db.session.commit()
-        flash('场地删除成功！', 'success')
+        conn = db.get_db()
+        with conn.cursor() as cursor:
+            cursor.execute('DELETE FROM Venue WHERE VenueID = %s', (venue_id,))
+            conn.commit()
+            flash('场地删除成功！', 'success')
         
     except Exception as e:
-        db.session.rollback()
+        conn.rollback()
         flash('删除失败，请重试！', 'error')
         
     return redirect(url_for('main.manage_venues'))
@@ -1784,7 +1769,22 @@ def review_registration(registration_id):
             # 如果是通过，需要检查一些条件
             if action == 'approve':
                 # 检查性别限制
-                if registration['GenderRestriction'] != '不限' and registration['GenderRestriction'] != registration['Gender']:
+                event_gender_restriction = registration['GenderRestriction']
+                student_gender_db = registration['Gender']
+                
+                # 创建性别映射
+                gender_map = {
+                    'M': '男',
+                    'F': '女',
+                    '不限': '不限' # 确保"不限"也能正确处理
+                }
+                
+                # 将数据库中的学生性别转换为中文，以便与项目性别限制进行比较
+                student_gender_chinese = gender_map.get(student_gender_db, student_gender_db) # 如果找不到匹配，使用原始值
+
+                # 只有当项目性别限制不是"不限"且学生性别与项目性别限制不符时，才视为不符合要求
+                # 注意：这里直接使用从数据库获取的 event_gender_restriction 进行比较，因为它是中文
+                if event_gender_restriction != '不限' and student_gender_chinese != event_gender_restriction:
                     flash('该学生不符合项目的性别要求！', 'error')
                     return redirect(url_for('main.manage_registrations'))
                 

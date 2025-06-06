@@ -1,10 +1,11 @@
 #利用应用程序Factory函数创建flask应用实例
 
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 import os
-from instance.config import Config
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from instance import config
 import logging
 
 from . import db
@@ -28,7 +29,7 @@ def create_app():
     logger = logging.getLogger(__name__)
 
     # 加载配置
-    app.config.from_object(Config)
+    app.config.from_object(config.Config)
     
     # 初始化数据库
     db.init_app(app)

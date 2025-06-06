@@ -75,6 +75,18 @@
                                 报名审核
                             </a>
                         </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('main.students') }}" class="btn btn-outline-danger btn-lg w-100 mb-3">
+                                <i class="fas fa-user-graduate"></i><br>
+                                学生管理
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('main.manage_referees') }}" class="btn btn-outline-secondary btn-lg w-100 mb-3">
+                                <i class="fas fa-whistle"></i><br>
+                                裁判管理
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -87,7 +99,7 @@
             <h5 class="mb-0">信息查询</h5>
         </div>
         <div class="card-body">
-            <form method="post">
+            <form method="get">
                 <div class="row g-3">
                     <div class="col-md">
                         <div class="form-floating">
@@ -113,6 +125,12 @@
                             <label for="result_search">搜索成绩 (学生/项目)</label>
                         </div>
                     </div>
+                    <div class="col-md">
+                         <div class="form-floating">
+                            <input type="text" class="form-control" id="result_class_search" name="result_class_search" placeholder="按班级名称或系别搜索" value="{{ result_class_search or '' }}">
+                            <label for="result_class_search">搜索成绩 (班级/系别)</label>
+                         </div>
+                    </div>
                     <div class="col-auto align-self-center">
                         <button type="submit" class="btn btn-primary">搜索</button>
                          <a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-secondary">重置</a>
@@ -123,9 +141,8 @@
     </div>
 
     <!-- 搜索结果 -->
-    {% if student_search or registration_search or competition_search or result_search %}
-    <div class="mb-4">
-        {% if searched_students %}
+    {% if student_search or registration_search or competition_search or result_search or result_class_search %}
+        {% if student_search and searched_students %}
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">学生搜索结果</h5>
@@ -153,13 +170,11 @@
                                 <td>{{ student.Gender }}</td>
                                 <td>{{ student.ClassName }}</td>
                                 <td>{{ student.Department }}</td>
-                                <td>{{ student.Phone or '-' }}</td>
-                                <td>{{ student.Email or '-' }}</td>
+                                <td>{{ student.Phone }}</td>
+                                <td>{{ student.Email }}</td>
                                 <td>
-                                    <a href="{{ url_for('main.edit_student', student_id=student.StudentID) }}" class="btn btn-warning btn-sm">编辑</a>
-                                    <form action="{{ url_for('main.delete_student', student_id=student.StudentID) }}" method="post" class="d-inline">
-                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('确定要删除该学生吗？')">删除</button>
-                                    </form>
+                                    <a href="{{ url_for('main.edit_student', student_id=student.StudentID) }}" class="btn btn-sm btn-primary">编辑</a>
+                                    <a href="{{ url_for('main.view_student_registrations', student_id=student.StudentID) }}" class="btn btn-sm btn-info">查看报名</a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -168,8 +183,10 @@
                 </div>
             </div>
         </div>
-        {% elif searched_registrations %}
-         <div class="card mb-4">
+        {% endif %}
+
+        {% if registration_search and searched_registrations %}
+        <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">报名搜索结果 (待审核)</h5>
             </div>
@@ -193,14 +210,7 @@
                                 <td>{{ reg.ClassName }}</td>
                                 <td>{{ reg.EventName }}</td>
                                 <td>
-                                    <form action="{{ url_for('main.review_registration', registration_id=reg.RegistrationID) }}" method="post" class="d-inline">
-                                        <input type="hidden" name="action" value="approve">
-                                        <button type="submit" class="btn btn-success btn-sm">通过</button>
-                                    </form>
-                                    <form action="{{ url_for('main.review_registration', registration_id=reg.RegistrationID) }}" method="post" class="d-inline">
-                                        <input type="hidden" name="action" value="reject">
-                                        <button type="submit" class="btn btn-danger btn-sm">拒绝</button>
-                                    </form>
+                                    <a href="{{ url_for('main.approve_registration', registration_id=reg.RegistrationID) }}" class="btn btn-sm btn-success">审核</a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -209,13 +219,14 @@
                 </div>
             </div>
         </div>
-        {% elif searched_competitions %}
+        {% endif %}
+
+        {% if competition_search and searched_competitions %}
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">比赛安排搜索结果</h5>
             </div>
             <div class="card-body">
-                {% if searched_competitions %}
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
@@ -235,82 +246,76 @@
                                 <td>{{ comp.EventName }}</td>
                                 <td>{{ comp.VenueName }}</td>
                                 <td>{{ comp.RefereeName or '-' }}</td>
+                                <td>{{ comp.Status }}</td>
                                 <td>
-                                    <span class="badge {% if comp.Status == '进行中' %}bg-success
-                                                      {% elif comp.Status == '已结束' %}bg-secondary
-                                                      {% elif comp.Status == '未开始' %}bg-primary
-                                                      {% else %}bg-warning{% endif %}">
-                                        {{ comp.Status }}
-                                    </span>
-                                </td>
-                                <td>
-                                     <a href="{{ url_for('main.edit_competition', competition_id=comp.CompetitionID) }}" class="btn btn-warning btn-sm">编辑</a>
-                                    <form action="{{ url_for('main.delete_competition', competition_id=comp.CompetitionID) }}" method="post" class="d-inline">
-                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('确定要删除该赛程吗？')">删除</button>
-                                    </form>
+                                    <a href="{{ url_for('main.edit_competition', competition_id=comp.CompetitionID) }}" class="btn btn-sm btn-primary">编辑</a>
                                 </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-                 {% else %}
-                    <p class="text-muted">没有找到匹配的比赛安排。</p>
-                 {% endif %}
             </div>
         </div>
-        {% elif searched_results %}
+        {% endif %}
+
+        {% if (result_search or result_class_search) and searched_results %}
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="mb-0">成绩搜索结果</h5>
             </div>
             <div class="card-body">
-                {% if searched_results %}
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>时间</th>
-                                <th>学生</th>
-                                <th>项目</th>
+                                <th>比赛时间</th>
+                                <th>项目名称</th>
                                 <th>分组</th>
+                                <th>学生姓名</th>
+                                <th>学号</th>
+                                <th>班级</th>
                                 <th>成绩</th>
                                 <th>名次</th>
                                 <th>积分</th>
-                                <th>录入裁判</th>
+                                <th>是否破纪录</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for result in searched_results %}
                             <tr>
-                                <td>{{ result.RecordTime.strftime('%Y-%m-%d %H:%M') }}</td>
-                                <td>{{ result.StudentName }}</td>
+                                <td>{{ result.ScheduledStartTime.strftime('%Y-%m-%d %H:%M') }}</td>
                                 <td>{{ result.EventName }}</td>
                                 <td>{{ result.GroupName or '-' }}</td>
+                                <td>{{ result.StudentName }}</td>
+                                <td>{{ result.StudentID }}</td>
+                                <td>{{ result.ClassName }} {{ result.Department }}</td>
                                 <td>{{ result.Value }}</td>
                                 <td>{{ result.Ranking }}</td>
                                 <td>{{ result.Score }}</td>
-                                <td>{{ result.RefereeName }}</td>
+                                <td>
+                                    {% if result.IsRecordBreaking %}
+                                    <span class="badge bg-danger">{{ result.RecordType or '' }}</span>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-                 {% else %}
-                    <p class="text-muted">没有找到匹配的成绩记录。</p>
-                 {% endif %}
-            </div>
-        </div>
-        {% else %}
-        <div class="card mb-4">
-            <div class="card-body">
-                 <p class="text-muted">没有找到匹配的信息。</p>
             </div>
         </div>
         {% endif %}
-    </div>
 
-    {% else %}
+        {% if not (searched_students or searched_registrations or searched_competitions or searched_results) and (student_search or registration_search or competition_search or result_search or result_class_search) %}
+        <div class="alert alert-info">
+            没有找到匹配的记录。
+        </div>
+        {% endif %}
+    {% endif %}
+
     <!-- 待审核报名记录 -->
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
@@ -394,14 +399,12 @@
                             </td>
                         </tr>
                         {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <p class="text-muted">今日暂无比赛安排</p>
-                    {% endif %}
-                </div>
+                    </tbody>
+                </table>
             </div>
+            {% else %}
+            <p class="text-muted">今日暂无比赛安排</p>
+            {% endif %}
         </div>
     </div>
 
@@ -481,6 +484,44 @@
             </div>
         </div>
     </div>
-    {% endif %}
+
+    <!-- 班级积分排名 -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">班级积分排名</h5>
+                </div>
+                <div class="card-body">
+                    {% if class_rankings %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>班级</th>
+                                    <th>院系</th>
+                                    <th>总积分</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ranking in class_rankings %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td>{{ ranking.ClassName }}</td>
+                                    <td>{{ ranking.Department }}</td>
+                                    <td>{{ ranking.total_score }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">暂无班级积分排名数据。</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %} 

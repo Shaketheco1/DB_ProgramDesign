@@ -45,7 +45,7 @@
             <h5 class="mb-0">搜索我的报名记录</h5>
         </div>
         <div class="card-body">
-            <form method="post">
+            <form method="get">
                 <div class="row g-3 align-items-center">
                     <div class="col-md-5">
                         <label for="registration_event_search" class="visually-hidden">搜索项目名称</label>
@@ -70,7 +70,7 @@
         </div>
     </div>
 
-    <!-- 我的报名记录 (搜索结果或全部记录) -->
+    <!-- 我的报名记录 -->
     <div class="row">
         <div class="col-md-12">
             <div class="card mb-4">
@@ -78,8 +78,7 @@
                     <h5 class="mb-0">{% if registration_event_search or registration_status_search %}报名搜索结果{% else %}我的报名记录{% endif %}</h5>
                 </div>
                 <div class="card-body">
-                    {% set display_registrations = searched_registrations if registration_event_search or registration_status_search else registrations %}
-                    {% if display_registrations %}
+                    {% if registrations %}
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
@@ -93,7 +92,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for reg in display_registrations %}
+                                {% for reg in registrations %}
                                 <tr>
                                     <td>{{ reg.RegistrationTime.strftime('%Y-%m-%d %H:%M') }}</td>
                                     <td>{{ reg.EventName }}</td>
@@ -133,15 +132,11 @@
             <h5 class="mb-0">搜索我的比赛成绩</h5>
         </div>
         <div class="card-body">
-            <form method="post">
+            <form method="get">
                 <div class="row g-3 align-items-center">
                     <div class="col-md">
                         <label for="result_event_search" class="visually-hidden">搜索项目名称</label>
                         <input type="text" class="form-control" id="result_event_search" name="result_event_search" placeholder="按项目名称搜索" value="{{ result_event_search or '' }}">
-                    </div>
-                    <div class="col-md">
-                         <label for="result_group_search" class="visually-hidden">按分组搜索</label>
-                         <input type="text" class="form-control" id="result_group_search" name="result_group_search" placeholder="按分组搜索" value="{{ result_group_search or '' }}">
                     </div>
                      <div class="col-auto">
                         <button type="submit" class="btn btn-primary">搜索</button>
@@ -152,16 +147,15 @@
         </div>
     </div>
 
-    <!-- 我的比赛成绩 (搜索结果或全部记录)-->
+    <!-- 我的比赛成绩 -->
     <div class="row">
         <div class="col-md-12">
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">{% if result_event_search or result_group_search %}成绩搜索结果{% else %}我的比赛成绩{% endif %}</h5>
+                    <h5 class="mb-0">{% if result_event_search %}成绩搜索结果{% else %}我的比赛成绩{% endif %}</h5>
                 </div>
                 <div class="card-body">
-                     {% set display_results = searched_results if result_event_search or result_group_search else results %}
-                    {% if display_results %}
+                    {% if results %}
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
@@ -176,7 +170,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for result in display_results %}
+                                {% for result in results %}
                                 <tr>
                                     <td>{{ result.ScheduledStartTime.strftime('%Y-%m-%d %H:%M') }}</td>
                                     <td>{{ result.EventName }}</td>
@@ -186,7 +180,7 @@
                                     <td>{{ result.Score }}</td>
                                     <td>
                                         {% if result.IsRecordBreaking %}
-                                        <span class="badge bg-danger">{{ result.RecordType or '' }}</span>{# 修正记录类型显示 #}
+                                        <span class="badge bg-danger">{{ result.RecordType or '' }}</span>
                                         {% else %}
                                         -
                                         {% endif %}
@@ -197,7 +191,7 @@
                         </table>
                     </div>
                     {% else %}
-                    <p class="text-muted">{% if result_event_search or result_group_search %}没有找到匹配的成绩记录。{% else %}暂无比赛成绩{% endif %}</p>
+                    <p class="text-muted">{% if result_event_search %}没有找到匹配的成绩记录。{% else %}暂无比赛成绩{% endif %}</p>
                     {% endif %}
                 </div>
             </div>
